@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Request an Appointment | Olivos Medical Center &amp; Spa</title>
+  <meta name="description" content="Request an appointment at Olivos Medical Center & Spa. Fill out a short form and we'll call you back to schedule, or call us directly to book over the phone." />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="apple-touch-icon" href="olivos-logo.png" />
+  <meta name="theme-color" content="#4f6720" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Olivos Medical Center & Spa" />
+  <meta property="og:title" content="Request an Appointment | Olivos Medical Center & Spa" />
+  <meta property="og:description" content="Request an appointment online and we'll call you back, or call us to book over the phone." />
+  <meta property="og:image" content="olivos-logo.png" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="nav">
+      <a class="nav-brand" href="index.html">
+        <img src="olivos-logo.png" alt="Olivos Medical Center & Spa logo" />
+        <span class="brand-text">Olivos Medical Center<span>&amp; Spa</span></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" data-en="Home" data-es="Inicio">Home</a></li>
+        <li><a href="services.html" data-en="Services" data-es="Servicios">Services</a></li>
+        <li><a href="about.html" data-en="About" data-es="Nosotros">About</a></li>
+        <li><a href="insurance.html" data-en="Insurance" data-es="Seguros">Insurance</a></li>
+        <li><a href="contact.html" data-en="Contact" data-es="Contacto">Contact</a></li>
+        <li><a href="#" data-link="portal" data-en="Patient Portal" data-es="Portal del Paciente">Patient Portal</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="lang-toggle" aria-label="Switch language"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18"/></svg> <span class="lang-current">ES</span></button>
+        <a href="#" data-link="booking" class="btn btn-primary" data-en="Book Now" data-es="Reservar">Book Now</a>
+        <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+      </div>
+    </nav>
+  </header>
+
+  <section class="page-hero">
+    <div class="container">
+      <span class="eyebrow" data-en="Appointments" data-es="Citas">Appointments</span>
+      <h1 data-lang-en class="block">Request an Appointment</h1>
+      <h1 data-lang-es class="block">Solicita una Cita</h1>
+      <p data-lang-en>Fill out the short form and we'll call you back to schedule, or call us directly to book over the phone. Whatever's easiest for you.</p>
+      <p data-lang-es>Completa el formulario y te llamaremos para agendar, o llámanos directamente para reservar por teléfono. Lo que sea más fácil para ti.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="booking-layout">
+
+        <!-- LEFT: request form -->
+        <div class="form-card">
+          <h2 data-lang-en class="block">Tell us a little about you</h2>
+          <h2 data-lang-es class="block">Cuéntanos un poco sobre ti</h2>
+          <p class="sub" data-en="We'll use this to call you back and find a time that works." data-es="Usaremos esto para llamarte y encontrar un horario que te convenga.">We'll use this to call you back and find a time that works.</p>
+
+          <form id="apptForm" novalidate>
+            <div class="form-grid">
+              <div class="field">
+                <label for="fname" data-en="First name " data-es="Nombre ">First name <span class="req">*</span></label>
+                <input id="fname" name="fname" type="text" required />
+              </div>
+              <div class="field">
+                <label for="lname" data-en="Last name " data-es="Apellido ">Last name <span class="req">*</span></label>
+                <input id="lname" name="lname" type="text" required />
+              </div>
+              <div class="field">
+                <label for="phone" data-en="Phone " data-es="Teléfono ">Phone <span class="req">*</span></label>
+                <input id="phone" name="phone" type="tel" required />
+              </div>
+              <div class="field">
+                <label for="email" data-en="Email" data-es="Correo electrónico">Email</label>
+                <input id="email" name="email" type="email" />
+              </div>
+              <div class="field">
+                <label for="dob" data-en="Date of birth" data-es="Fecha de nacimiento">Date of birth</label>
+                <input id="dob" name="dob" type="date" />
+              </div>
+              <div class="field">
+                <label for="age" data-en="Age" data-es="Edad">Age</label>
+                <input id="age" name="age" type="number" min="0" max="120" />
+              </div>
+              <div class="field full">
+                <label for="address" data-en="Home address" data-es="Dirección">Home address</label>
+                <input id="address" name="address" type="text" />
+              </div>
+              <div class="field">
+                <label for="insurance" data-en="Insurance provider" data-es="Aseguradora">Insurance provider</label>
+                <input id="insurance" name="insurance" type="text" placeholder="Medicaid, Medicare, Oscar…" />
+              </div>
+              <div class="field">
+                <label for="insid" data-en="Insurance ID / member #" data-es="ID / # de miembro del seguro">Insurance ID / member #</label>
+                <input id="insid" name="insid" type="text" />
+              </div>
+              <div class="field">
+                <label for="lang" data-en="Preferred language" data-es="Idioma preferido">Preferred language</label>
+                <select id="lang" name="lang">
+                  <option value="English">English</option>
+                  <option value="Español">Español</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="reason" data-en="Reason / service" data-es="Motivo / servicio">Reason / service</label>
+                <input id="reason" name="reason" type="text" placeholder="Primary care, lab work, wellness…" />
+              </div>
+              <div class="field full">
+                <label for="preferred" data-en="Preferred days/times to be reached" data-es="Días/horarios preferidos para contactarte">Preferred days/times to be reached</label>
+                <textarea id="preferred" name="preferred" placeholder="e.g. Weekday mornings"></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary btn-lg" data-en="Send Request" data-es="Enviar Solicitud">Send Request</button>
+              <span style="color:var(--muted)" data-en="or call us, see the panel" data-es="o llámanos, mira el panel">or call us, see the panel</span>
+            </div>
+            <p class="form-note" data-en="We'll receive your request and call you back to confirm a time. Please don't include sensitive medical details here." data-es="Recibiremos tu solicitud y te llamaremos para confirmar un horario. Por favor no incluyas detalles médicos sensibles aquí.">We'll receive your request and call you back to confirm a time. Please don't include sensitive medical details here.</p>
+            <div class="form-success" id="formSuccess">
+              <span data-en="Thanks! Your request has been sent. We'll call you back to confirm a time. You can also reach us at (786) 339-9844." data-es="¡Gracias! Tu solicitud ha sido enviada. Te llamaremos para confirmar un horario. También puedes llamarnos al (786) 339-9844.">Thanks! Your request has been sent. We'll call you back to confirm a time. You can also reach us at (786) 339-9844.</span>
+            </div>
+          </form>
+        </div>
+
+        <!-- RIGHT: call panel -->
+        <aside class="call-panel">
+          <span class="eyebrow" data-en="Prefer to talk?" data-es="¿Prefieres hablar?">Prefer to talk?</span>
+          <h3 data-lang-en class="block">Give us a call</h3>
+          <h3 data-lang-es class="block">Llámanos</h3>
+          <p data-lang-en>Not a fan of forms? Call us and our bilingual team will book you over the phone in minutes.</p>
+          <p data-lang-es>¿No te gustan los formularios? Llámanos y nuestro equipo bilingüe te agenda por teléfono en minutos.</p>
+          <a class="phone" href="tel:+17863399844">(786) 339-9844</a>
+          <div>
+            <a href="tel:+17863399844" class="btn btn-white btn-lg" style="margin-top:10px" data-en="Call Now" data-es="Llamar Ahora">Call Now</a>
+          </div>
+          <div class="hours-mini">
+            <div><span data-en="Mon – Fri" data-es="Lun – Vie">Mon – Fri</span><span>8:00 AM – 5:00 PM</span></div>
+            <div><span data-en="Saturday" data-es="Sábado">Saturday</span><span>9:00 AM – 3:00 PM</span></div>
+            <div><span data-en="Sunday" data-es="Domingo">Sunday</span><span data-en="Closed" data-es="Cerrado">Closed</span></div>
+          </div>
+        </aside>
+
+      </div>
+
+      <!-- TeleVisit nudge -->
+      <div style="text-align:center;margin-top:48px">
+        <p style="color:var(--muted);margin-bottom:14px" data-en="Looking for a virtual visit instead?" data-es="¿Buscas una visita virtual?">Looking for a virtual visit instead?</p>
+        <a href="#" data-link="televisit" class="btn btn-gold" data-en="Book a TeleVisit" data-es="Reservar Telemedicina">Book a TeleVisit</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <img src="olivos-logo.png" alt="Olivos Medical Center & Spa" />
+          <p data-en="All your healthcare and wellness needs in one location. Serving the Homestead community in English & Spanish." data-es="Toda tu salud y bienestar en un solo lugar. Sirviendo a la comunidad de Homestead en inglés y español.">All your healthcare and wellness needs in one location. Serving the Homestead community in English &amp; Spanish.</p>
+        </div>
+        <div>
+          <h4 data-en="Explore" data-es="Explora">Explore</h4>
+          <ul class="footer-nav">
+            <li><a href="index.html" data-en="Home" data-es="Inicio">Home</a></li>
+            <li><a href="services.html" data-en="Services" data-es="Servicios">Services</a></li>
+            <li><a href="about.html" data-en="About" data-es="Nosotros">About</a></li>
+            <li><a href="insurance.html" data-en="Insurance" data-es="Seguros">Insurance</a></li>
+            <li><a href="contact.html" data-en="Contact" data-es="Contacto">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 data-en="Contact" data-es="Contacto">Contact</h4>
+          <ul>
+            <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11s-8-5-8-11a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="2.6"/></svg> 25001 SW 127th Ave, Suite 202<br>Homestead, FL 33032</li>
+            <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16.5v3a2 2 0 0 1-2.2 2 19.6 19.6 0 0 1-8.5-3 19.3 19.3 0 0 1-6-6A19.6 19.6 0 0 1 1.3 4 2 2 0 0 1 3.3 2h3a2 2 0 0 1 2 1.7c.13.95.36 1.86.7 2.76a2 2 0 0 1-.45 2.11L7.3 9.9a16 16 0 0 0 6 6l1.32-1.26a2 2 0 0 1 2.11-.45c.9.34 1.81.57 2.76.7A2 2 0 0 1 21 16.5z"/></svg> <a href="tel:+17863399844">(786) 339-9844</a></li>
+            <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-1"/><rect x="6" y="14" width="12" height="7" rx="1"/></svg> <span data-en="Fax:" data-es="Fax:">Fax:</span> (888) 440-2834</li>
+            <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg> <a href="mailto:olivosmedicalcenterllc@gmail.com">olivosmedicalcenterllc@gmail.com</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span data-en="© 2026 Olivos Medical Center & Spa LLC. All rights reserved." data-es="© 2026 Olivos Medical Center & Spa LLC. Todos los derechos reservados.">© 2026 Olivos Medical Center &amp; Spa LLC. All rights reserved.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="main.js?v=5"></script>
+  <script>
+    (function () {
+      /* ============================================================
+         WHERE APPOINTMENT REQUESTS GO
+         ------------------------------------------------------------
+         To have requests land straight in your inbox:
+         1. Sign up free at https://formspree.io using
+            olivosmedicalcenterllc@gmail.com
+         2. Create a form and copy its endpoint
+            (looks like: https://formspree.io/f/abcwxyz)
+         3. Paste it between the quotes below, replacing YOUR_FORM_ID.
+         Until then, the form safely falls back to opening the
+         patient's email app prefilled to the clinic.
+         ============================================================ */
+      var FORMSPREE_ENDPOINT = "https://formspree.io/f/mnjknlol";
+      var CLINIC_EMAIL = "olivosmedicalcenterllc@gmail.com";
+
+      var form = document.getElementById("apptForm");
+      if (!form) return;
+      var successBox = document.getElementById("formSuccess");
+
+      function collect() {
+        var f = form;
+        return {
+          "Name": (f.fname.value + " " + f.lname.value).trim(),
+          "Phone": f.phone.value,
+          "Email": f.email.value,
+          "Date of birth": f.dob.value,
+          "Age": f.age.value,
+          "Address": f.address.value,
+          "Insurance provider": f.insurance.value,
+          "Insurance ID / member #": f.insid.value,
+          "Preferred language": f.lang.value,
+          "Reason / service": f.reason.value,
+          "Preferred days/times": f.preferred.value
+        };
+      }
+
+      function errorMsg() {
+        alert("Sorry, something went wrong sending your request. Please call us at (786) 339-9844.");
+      }
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var f = form;
+        if (!f.fname.value.trim() || !f.lname.value.trim() || !f.phone.value.trim()) {
+          alert("Please enter your first name, last name, and phone number.");
+          return;
+        }
+        var data = collect();
+        var configured = FORMSPREE_ENDPOINT.indexOf("YOUR_FORM_ID") === -1;
+
+        // Preferred path: post straight to your inbox via Formspree.
+        if (configured && window.fetch) {
+          var payload = { _subject: "Appointment Request from " + data.Name };
+          if (data.Email) payload.email = data.Email; // Formspree uses this as reply-to
+          Object.keys(data).forEach(function (k) { payload[k] = data[k]; });
+          var btn = form.querySelector('button[type="submit"]');
+          if (btn) btn.disabled = true;
+          fetch(FORMSPREE_ENDPOINT, {
+            method: "POST",
+            headers: { "Accept": "application/json", "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          }).then(function (r) {
+            if (btn) btn.disabled = false;
+            if (r.ok) {
+              form.reset();
+              successBox.style.display = "block";
+              successBox.scrollIntoView({ behavior: "smooth", block: "center" });
+            } else { errorMsg(); }
+          }).catch(function () { if (btn) btn.disabled = false; errorMsg(); });
+          return;
+        }
+
+        // Fallback: open the patient's email app prefilled to the clinic.
+        var body = "New appointment request from the website:\n\n";
+        Object.keys(data).forEach(function (k) { if (data[k]) body += k + ": " + data[k] + "\n"; });
+        body += "\nPlease call the patient back to confirm a time.";
+        window.location.href = "mailto:" + CLINIC_EMAIL +
+          "?subject=" + encodeURIComponent("Appointment Request from " + data.Name) +
+          "&body=" + encodeURIComponent(body);
+        successBox.style.display = "block";
+      });
+    })();
+  </script>
+</body>
+</html>
