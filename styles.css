@@ -200,12 +200,12 @@ section { padding: 92px 0; }
 .cat-card .desc { font-size: 0.92rem; opacity: 0.94; margin-top: 6px; }
 /* Each card layers: dark overlay (keeps text readable) + a service photo you drop into
    /assets + a brand-gradient fallback that shows until the photo is added. */
-.cat-card.c1 { background-image: var(--ov), url('cat-primary.webp'),     linear-gradient(150deg,#6e8c2a,#3f5419); }
-.cat-card.c2 { background-image: var(--ov), url('cat-diagnostics.webp'), linear-gradient(150deg,#a8893f,#6b531f); }
-.cat-card.c3 { background-image: var(--ov), url('cat-wellness.webp'),    linear-gradient(150deg,#88a64a,#4f6720); }
-.cat-card.c4 { background-image: var(--ov), url('cat-mens.webp'),        linear-gradient(150deg,#557030,#2e3d12); }
-.cat-card.c5 { background-image: var(--ov), url('cat-aesthetics.webp'),  linear-gradient(150deg,#c9a95c,#8a6d2c); }
-.cat-card.c6 { background-image: var(--ov), url('cat-inhome.webp'),      linear-gradient(150deg,#7d9a3a,#46611c); }
+.cat-card.c1 { background-image: linear-gradient(180deg, rgba(46,42,30,0.10) 0%, rgba(46,42,30,0.33) 46%, rgba(46,42,30,0.82) 100%), url('cat-primary.webp'),     linear-gradient(150deg,#6e8c2a,#3f5419); }
+.cat-card.c2 { background-image: linear-gradient(180deg, rgba(46,42,30,0.10) 0%, rgba(46,42,30,0.33) 46%, rgba(46,42,30,0.82) 100%), url('cat-diagnostics.webp'), linear-gradient(150deg,#a8893f,#6b531f); }
+.cat-card.c3 { background-image: linear-gradient(180deg, rgba(46,42,30,0.10) 0%, rgba(46,42,30,0.33) 46%, rgba(46,42,30,0.82) 100%), url('cat-wellness.webp'),    linear-gradient(150deg,#88a64a,#4f6720); }
+.cat-card.c4 { background-image: linear-gradient(180deg, rgba(46,42,30,0.10) 0%, rgba(46,42,30,0.33) 46%, rgba(46,42,30,0.82) 100%), url('cat-mens.webp'),        linear-gradient(150deg,#557030,#2e3d12); }
+.cat-card.c5 { background-image: linear-gradient(180deg, rgba(46,42,30,0.10) 0%, rgba(46,42,30,0.33) 46%, rgba(46,42,30,0.82) 100%), url('cat-aesthetics.webp'),  linear-gradient(150deg,#c9a95c,#8a6d2c); }
+.cat-card.c6 { background-image: linear-gradient(180deg, rgba(46,42,30,0.10) 0%, rgba(46,42,30,0.33) 46%, rgba(46,42,30,0.82) 100%), url('cat-inhome.webp'),      linear-gradient(150deg,#7d9a3a,#46611c); }
 
 /* ---------------- Stats band ---------------- */
 .stats-band { background: var(--olive-deep); color: #fff; }
@@ -433,3 +433,15 @@ html[lang="es"] [data-lang-en].block { display: none; }
   .call-panel { position: static; }
   .form-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------------- Insurance carrier grid ---------------- */
+.carrier-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; }
+.carrier-tile {
+  flex: 0 1 220px; background: #fff; border: 1px solid var(--sand); border-radius: 16px;
+  padding: 24px 18px; box-shadow: var(--shadow-sm); display: flex; align-items: center;
+  justify-content: center; text-align: center; min-height: 118px;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.carrier-tile:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+.carrier-logo { max-height: 56px; max-width: 100%; width: auto; object-fit: contain; }
+.carrier-name { font-family: var(--font-head); font-size: 1.1rem; color: var(--olive-deep); font-weight: 700; line-height: 1.15; }
