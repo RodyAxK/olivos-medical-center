@@ -1,3 +1,6 @@
 User-agent: *
 Allow: /
-Sitemap: https://REPLACE-WITH-YOUR-DOMAIN/sitemap.xml
+Disallow: /staff-login.html
+Disallow: /staff-portal.html
+
+Sitemap: https://olivosmedicalcenter.com/sitemap.xml
