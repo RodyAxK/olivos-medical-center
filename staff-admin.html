@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin Board | Olivos</title>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="staff.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="app-brand">
+      <img src="olivos-logo.png" alt="Olivos" />
+      <div class="t">Admin Board<small>Rody &amp; Janet</small></div>
+    </div>
+    <div class="app-user">
+      <a class="btn btn-ghost" href="staff-portal.html">← Dashboard</a>
+      <button class="btn btn-ghost" id="logoutBtn">Log out</button>
+    </div>
+  </header>
+  <main class="app-main">
+    <div class="panel">
+      <div class="big">🗂️</div>
+      <h2>Admin Board</h2>
+      <p>This is your and Janet's private shared board. The live kanban (To&nbsp;Do / In&nbsp;Progress / Waiting / Done) with owner badges and pull-from-feed is being built next.</p>
+    </div>
+  </main>
+  <script type="module">
+    import { auth } from "./firebase-init.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+    import { isAdmin } from "./staff-config.js";
+    onAuthStateChanged(auth, (user) => {
+      if (!user) { location.replace("staff-login.html"); return; }
+      if (!isAdmin(user.uid)) { location.replace("staff-portal.html"); return; }
+    });
+    document.getElementById("logoutBtn").addEventListener("click", async () => { await signOut(auth); location.replace("staff-login.html"); });
+  </script>
+</body>
+</html>

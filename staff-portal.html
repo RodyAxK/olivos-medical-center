@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Staff Portal | Olivos Medical Center &amp; Spa</title>
+  <title>Staff Dashboard | Olivos Medical Center &amp; Spa</title>
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,47 +15,233 @@
   <header class="app-header">
     <div class="app-brand">
       <img src="olivos-logo.png" alt="Olivos" />
-      <div class="t">Olivos Staff Portal<small>Medical Center &amp; Spa</small></div>
+      <div class="t">Staff Dashboard<small>Olivos Medical Center</small></div>
     </div>
     <div class="app-user">
-      <span class="badge" id="userBadge" style="background:var(--olive)">•</span>
+      <a class="btn btn-ghost" id="adminLink" href="staff-admin.html" style="display:none">Admin Board</a>
+      <span class="badge" id="userBadge">•</span>
       <span class="who" id="userWho">…</span>
       <button class="btn btn-ghost" id="logoutBtn">Log out</button>
     </div>
   </header>
 
   <main class="app-main">
-    <div class="panel">
-      <div class="big">✅</div>
-      <h2>You're signed in</h2>
-      <p>Nice — your login is working. This is your private staff area. The full tools are being built next:</p>
-      <div style="margin-top:16px">
-        <span class="pill">Staff Dashboard &amp; feed</span>
-        <span class="pill">Reminders &amp; calendar</span>
-        <span class="pill">Admin Board (kanban)</span>
-        <span class="pill">Live sync</span>
+    <div id="errBanner" class="err-banner" style="display:none"></div>
+
+    <!-- Composer -->
+    <section class="composer panel">
+      <h3>Post to the team</h3>
+      <input id="cSubject" class="in" type="text" placeholder="Subject — e.g., Call UnitedHealthcare about J.D.'s claim" />
+      <textarea id="cBody" class="in" placeholder="Details / context (please use patient initials, not full names)"></textarea>
+      <div class="composer-row">
+        <select id="cCategory" class="in" title="Category"></select>
+        <select id="cAssign" class="in" title="For / assigned to"></select>
+        <input id="cDue" class="in" type="date" title="Due date" />
+        <label class="chk"><input type="checkbox" id="cUrgent" /> Urgent</label>
+        <button class="btn btn-gold" id="postBtn" style="width:auto;margin-left:auto">Post</button>
       </div>
+    </section>
+
+    <!-- Filters -->
+    <div class="filters">
+      <input id="fSearch" class="in" type="text" placeholder="Search posts…" />
+      <select id="fCategory" class="in"></select>
+      <select id="fStatus" class="in">
+        <option value="">All statuses</option>
+        <option value="open">Open</option>
+        <option value="inprogress">In Progress</option>
+        <option value="done">Done</option>
+      </select>
     </div>
+
+    <div id="feed" class="feed"></div>
+    <div id="emptyMsg" class="empty" style="display:none">No posts match — or none yet. Post the first one above. 👆</div>
   </main>
 
   <script type="module">
-    import { auth } from "./firebase-init.js";
+    import { auth, db } from "./firebase-init.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+    import {
+      collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc,
+      onSnapshot, query, orderBy, serverTimestamp, increment
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+    import { ADMINS, CATEGORIES, GROUPS, isAdmin, colorFor } from "./staff-config.js";
 
-    const who = document.getElementById("userWho");
-    const badge = document.getElementById("userBadge");
+    const $ = (id) => document.getElementById(id);
+    let ME = null;          // { uid, name, admin, color }
+    let POSTS = [];         // live posts
+    let USERS = {};         // uid -> {name}
+    const commentSubs = {}; // postId -> unsubscribe
 
-    onAuthStateChanged(auth, (user) => {
+    const STATUS = { open: "Open", inprogress: "In Progress", done: "Done" };
+
+    function showErr(msg) { const b = $("errBanner"); b.textContent = msg; b.style.display = "block"; }
+    function timeAgo(ts) {
+      if (!ts || !ts.toDate) return "just now";
+      const s = Math.floor((Date.now() - ts.toDate().getTime()) / 1000);
+      if (s < 60) return "just now";
+      if (s < 3600) return Math.floor(s/60) + "m ago";
+      if (s < 86400) return Math.floor(s/3600) + "h ago";
+      return ts.toDate().toLocaleDateString();
+    }
+
+    // ---------- auth ----------
+    onAuthStateChanged(auth, async (user) => {
       if (!user) { location.replace("staff-login.html"); return; }
-      const name = user.displayName || user.email || "Staff";
-      who.textContent = name;
-      badge.textContent = (name[0] || "S").toUpperCase();
+      ME = { uid: user.uid, admin: isAdmin(user.uid), color: colorFor(user.uid),
+             name: isAdmin(user.uid) ? ADMINS[user.uid].name : (user.displayName || (user.email||"Staff").split("@")[0]) };
+      $("userWho").textContent = ME.name;
+      $("userBadge").textContent = (ME.name[0]||"S").toUpperCase();
+      $("userBadge").style.background = ME.color;
+      if (ME.admin) $("adminLink").style.display = "";
+      try {
+        const ref = doc(db, "users", ME.uid);
+        const snap = await getDoc(ref);
+        if (!snap.exists())
+          await setDoc(ref, { name: ME.name, email: user.email||"", role: ME.admin?"admin":"staff", color: ME.color, createdAt: serverTimestamp() });
+      } catch (e) { console.warn(e); }
+      initOptions(); subscribeUsers(); subscribePosts();
+    });
+    $("logoutBtn").addEventListener("click", async () => { await signOut(auth); location.replace("staff-login.html"); });
+
+    // ---------- dropdowns / filters ----------
+    function initOptions() {
+      $("cCategory").innerHTML = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join("");
+      $("fCategory").innerHTML = `<option value="">All categories</option>` + CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join("");
+      rebuildAssign();
+      ["fSearch","fCategory","fStatus"].forEach(id => $(id).addEventListener("input", renderFeed));
+    }
+    function rebuildAssign() {
+      const people = Object.values(USERS).map(u => u.name).filter(Boolean).sort();
+      const opts = GROUPS.concat(people.length ? ["— Staff —", ...people] : []);
+      $("cAssign").innerHTML = opts.map(o => o.startsWith("—") ? `<option disabled>${o}</option>` : `<option value="${o}">${o === "Anyone" ? "For: Anyone" : "For: " + o}</option>`).join("");
+    }
+    function subscribeUsers() {
+      onSnapshot(collection(db, "users"), (snap) => {
+        USERS = {}; snap.forEach(d => USERS[d.id] = d.data()); rebuildAssign();
+      }, (e) => console.warn(e));
+    }
+
+    // ---------- posts ----------
+    function subscribePosts() {
+      const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+      onSnapshot(q, (snap) => {
+        POSTS = []; snap.forEach(d => POSTS.push({ id: d.id, ...d.data() })); renderFeed();
+      }, (e) => {
+        showErr("Can't reach the database. Make sure the Firestore security rules are published (see the setup steps).");
+        console.error(e);
+      });
+    }
+
+    $("postBtn").addEventListener("click", async () => {
+      const subject = $("cSubject").value.trim();
+      if (!subject) { $("cSubject").focus(); return; }
+      const data = {
+        subject, body: $("cBody").value.trim(),
+        category: $("cCategory").value, assignTo: $("cAssign").value || "Anyone",
+        dueDate: $("cDue").value || null, urgent: $("cUrgent").checked,
+        status: "open", createdBy: ME.uid, createdByName: ME.name,
+        workingOn: null, workingOnName: null, commentCount: 0, createdAt: serverTimestamp()
+      };
+      $("postBtn").disabled = true;
+      try {
+        await addDoc(collection(db, "posts"), data);
+        $("cSubject").value = ""; $("cBody").value = ""; $("cDue").value = ""; $("cUrgent").checked = false;
+      } catch (e) { showErr("Couldn't post. Check the security rules are published."); console.error(e); }
+      $("postBtn").disabled = false;
     });
 
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-      await signOut(auth);
-      location.replace("staff-login.html");
-    });
+    async function setStatus(id, status) { try { await updateDoc(doc(db,"posts",id), { status }); } catch(e){ console.error(e);} }
+    async function toggleClaim(p) {
+      const mine = p.workingOn === ME.uid;
+      try { await updateDoc(doc(db,"posts",p.id), mine ? { workingOn:null, workingOnName:null } : { workingOn:ME.uid, workingOnName:ME.name }); }
+      catch(e){ console.error(e);}
+    }
+    async function removePost(id) { if (!confirm("Delete this post?")) return; try { await deleteDoc(doc(db,"posts",id)); } catch(e){ console.error(e);} }
+
+    // ---------- render ----------
+    function renderFeed() {
+      const feed = $("feed"); feed.innerHTML = "";
+      const term = $("fSearch").value.toLowerCase(), fc = $("fCategory").value, fs = $("fStatus").value;
+      const list = POSTS.filter(p =>
+        (!fc || p.category === fc) && (!fs || p.status === fs) &&
+        (!term || (p.subject + " " + (p.body||"")).toLowerCase().includes(term)));
+      $("emptyMsg").style.display = list.length ? "none" : "block";
+      list.forEach(p => feed.appendChild(card(p)));
+    }
+
+    function chip(text, cls) { const s = document.createElement("span"); s.className = "chip " + (cls||""); s.textContent = text; return s; }
+    function overdue(p) { return p.dueDate && p.status !== "done" && p.dueDate < new Date().toISOString().slice(0,10); }
+
+    function card(p) {
+      const c = document.createElement("div"); c.className = "post" + (p.urgent ? " urgent" : "");
+      // top row: chips + status select
+      const top = document.createElement("div"); top.className = "post-top";
+      const chips = document.createElement("div"); chips.className = "chips";
+      chips.appendChild(chip(p.category || "General", "cat"));
+      chips.appendChild(chip("For: " + (p.assignTo || "Anyone"), "for"));
+      if (p.urgent) chips.appendChild(chip("Urgent", "urg"));
+      if (p.dueDate) chips.appendChild(chip((overdue(p) ? "Overdue " : "Due ") + p.dueDate, overdue(p) ? "over" : "due"));
+      top.appendChild(chips);
+      const sel = document.createElement("select"); sel.className = "status " + p.status;
+      Object.entries(STATUS).forEach(([v,l]) => { const o=document.createElement("option"); o.value=v; o.textContent=l; if(v===p.status)o.selected=true; sel.appendChild(o); });
+      sel.addEventListener("change", () => setStatus(p.id, sel.value));
+      top.appendChild(sel);
+      c.appendChild(top);
+      // subject + body
+      const h = document.createElement("div"); h.className = "post-subject"; h.textContent = p.subject; c.appendChild(h);
+      if (p.body) { const b = document.createElement("div"); b.className = "post-body"; b.textContent = p.body; c.appendChild(b); }
+      // meta row
+      const meta = document.createElement("div"); meta.className = "post-meta";
+      const by = document.createElement("span"); by.innerHTML = `Posted by <b>${escapeHtml(p.createdByName||"—")}</b> · ${timeAgo(p.createdAt)}`;
+      meta.appendChild(by);
+      const claim = document.createElement("button"); claim.className = "linkbtn";
+      if (p.workingOn) { claim.textContent = (p.workingOn === ME.uid ? "You're on it — release" : "Working: " + (p.workingOnName||"someone")); }
+      else claim.textContent = "I'll take this";
+      claim.addEventListener("click", () => toggleClaim(p));
+      meta.appendChild(claim);
+      const cmt = document.createElement("button"); cmt.className = "linkbtn"; cmt.textContent = "💬 " + (p.commentCount||0);
+      cmt.addEventListener("click", () => toggleComments(c, p, cmt));
+      meta.appendChild(cmt);
+      if (p.createdBy === ME.uid || ME.admin) { const del=document.createElement("button"); del.className="linkbtn del"; del.textContent="Delete"; del.addEventListener("click",()=>removePost(p.id)); meta.appendChild(del); }
+      c.appendChild(meta);
+      // comments container
+      const cc = document.createElement("div"); cc.className = "comments"; cc.style.display = "none"; c.appendChild(cc);
+      return c;
+    }
+
+    function toggleComments(cardEl, p, btn) {
+      const cc = cardEl.querySelector(".comments");
+      if (cc.style.display === "none") {
+        cc.style.display = "block";
+        if (!cc.dataset.init) {
+          cc.dataset.init = "1";
+          const listEl = document.createElement("div"); listEl.className = "clist"; cc.appendChild(listEl);
+          const row = document.createElement("div"); row.className = "crow";
+          const inp = document.createElement("input"); inp.className = "in"; inp.placeholder = "Add a comment…";
+          const send = document.createElement("button"); send.className = "btn btn-gold"; send.style.width="auto"; send.textContent = "Send";
+          const addC = async () => {
+            const body = inp.value.trim(); if (!body) return; inp.value = "";
+            try {
+              await addDoc(collection(db, "posts", p.id, "comments"), { body, authorId: ME.uid, authorName: ME.name, createdAt: serverTimestamp() });
+              await updateDoc(doc(db, "posts", p.id), { commentCount: increment(1) });
+            } catch (e) { console.error(e); }
+          };
+          send.addEventListener("click", addC);
+          inp.addEventListener("keydown", (e) => { if (e.key === "Enter") addC(); });
+          row.appendChild(inp); row.appendChild(send); cc.appendChild(row);
+          const q = query(collection(db, "posts", p.id, "comments"), orderBy("createdAt", "asc"));
+          commentSubs[p.id] = onSnapshot(q, (snap) => {
+            listEl.innerHTML = "";
+            snap.forEach(d => { const x=d.data(); const el=document.createElement("div"); el.className="comment";
+              el.innerHTML = `<b>${escapeHtml(x.authorName||"—")}</b> <span class="ct">${timeAgo(x.createdAt)}</span><div></div>`;
+              el.querySelector("div").textContent = x.body; listEl.appendChild(el); });
+          }, (e)=>console.error(e));
+        }
+      } else { cc.style.display = "none"; }
+    }
+
+    function escapeHtml(s){ return (s||"").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
   </script>
 </body>
 </html>

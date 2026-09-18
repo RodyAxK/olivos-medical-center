@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return request.auth != null && request.auth.uid in [
+        "toCuF9ZjuNcn4ujM2ijl0NHK2kC3",   // Rody
+        "5cjAusU8YYORnXu2cxoxu5k6h9x2"    // Janet
+      ];
+    }
+
+    // Staff profiles: everyone signed in can read; you edit your own, admins edit any.
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow write: if signedIn() && (request.auth.uid == uid || isAdmin());
+    }
+
+    // Staff dashboard feed (all signed-in staff)
+    match /posts/{postId} {
+      allow read, create, update: if signedIn();
+      allow delete: if signedIn() && (resource.data.createdBy == request.auth.uid || isAdmin());
+      match /comments/{commentId} {
+        allow read, create: if signedIn();
+        allow update, delete: if signedIn() && (resource.data.authorId == request.auth.uid || isAdmin());
+      }
+    }
+
+    // Admin Board — only the two admins
+    match /adminTasks/{taskId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Activity log (append-only for signed-in users)
+    match /activity/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow update, delete: if false;
+    }
+  }
+}
