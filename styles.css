@@ -445,3 +445,10 @@ html[lang="es"] [data-lang-en].block { display: none; }
 .carrier-tile:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
 .carrier-logo { max-height: 56px; max-width: 100%; width: auto; object-fit: contain; }
 .carrier-name { font-family: var(--font-head); font-size: 1.1rem; color: var(--olive-deep); font-weight: 700; line-height: 1.15; }
+
+.footer-bottom .staff-link{color:var(--gold-light);font-weight:600;text-decoration:none;}
+.footer-bottom .staff-link:hover{color:#fff;text-decoration:underline;}
+
+.nav-staff{padding:8px 14px;font-size:.85rem}
+.staff-mobile{display:none}
+@media (max-width:980px){.nav-staff{display:none}.staff-mobile{display:block}}
