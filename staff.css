@@ -113,3 +113,29 @@ textarea.in{min-height:70px;resize:vertical}
 .err-banner{background:#fbe6e2;border:1px solid #f1c9c1;color:#8a2b1a;padding:12px 16px;border-radius:10px;margin-bottom:16px;font-weight:500;font-size:.92rem}
 .empty{text-align:center;color:var(--muted);padding:40px 0}
 @media (max-width:600px){.composer-row .in{flex:1 1 46%}.post-top{flex-direction:column}}
+
+/* ---------- Calendar ---------- */
+.cal{margin-bottom:20px;text-align:left}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-head h3{font-size:1.15rem}
+.cal-nav{display:flex;gap:6px;align-items:center}
+.cal-nav button{background:#fff;border:1.5px solid var(--sand);border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--olive-dark);font-weight:700;line-height:1}
+.cal-nav button:hover{background:var(--cream-2)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-dow{text-align:center;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding-bottom:4px}
+.cal-cell{position:relative;min-height:52px;border:1px solid var(--cream-2);border-radius:10px;padding:6px;background:#fff}
+.cal-cell.empty{background:transparent;border:none}
+.cal-cell.today{border-color:var(--olive);box-shadow:inset 0 0 0 1px var(--olive)}
+.cal-cell.has{cursor:pointer}
+.cal-cell.has:hover{background:var(--cream-2)}
+.cal-num{font-size:.8rem;font-weight:600;color:var(--ink)}
+.cal-dot{position:absolute;bottom:6px;right:6px;min-width:20px;height:20px;border-radius:999px;background:var(--olive);color:#fff;font-size:.7rem;font-weight:700;display:inline-grid;place-items:center;padding:0 5px}
+.cal-dot.urg{background:var(--gold)}
+.cal-dot.over{background:#c0392b}
+.cal-day{display:none;margin-top:14px;border-top:1px solid var(--cream-2);padding-top:12px}
+.cal-day-h{font-weight:700;color:var(--olive-dark);margin-bottom:8px;font-size:.9rem}
+.cal-day-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--sand);border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:.9rem}
+.cal-day-item:hover{background:var(--cream-2)}
+.post.flash{animation:flash 1.4s ease}
+@keyframes flash{0%,100%{box-shadow:var(--shadow-sm)}30%{box-shadow:0 0 0 3px var(--gold)}}
+@media (max-width:600px){.cal-cell{min-height:44px;padding:4px}.cal-dot{min-width:16px;height:16px;font-size:.62rem}}

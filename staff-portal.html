@@ -32,7 +32,7 @@
     <section class="composer panel">
       <h3>Post to the team</h3>
       <input id="cSubject" class="in" type="text" placeholder="Subject — e.g., Call UnitedHealthcare about J.D.'s claim" />
-      <textarea id="cBody" class="in" placeholder="Details / context (please use patient initials, not full names)"></textarea>
+      <textarea id="cBody" class="in" placeholder="Details / context — for patients use initials + DOB (e.g., J.M. 04/12/1985), not full names"></textarea>
       <div class="composer-row">
         <select id="cCategory" class="in" title="Category"></select>
         <select id="cAssign" class="in" title="For / assigned to"></select>
@@ -40,6 +40,20 @@
         <label class="chk"><input type="checkbox" id="cUrgent" /> Urgent</label>
         <button class="btn btn-gold" id="postBtn" style="width:auto;margin-left:auto">Post</button>
       </div>
+    </section>
+
+    <!-- Calendar -->
+    <section class="cal panel">
+      <div class="cal-head">
+        <h3>📅 Due dates</h3>
+        <div class="cal-nav">
+          <button id="calPrev" title="Previous month">‹</button>
+          <span id="calTitle" style="font-weight:700;color:var(--olive-dark);min-width:150px;text-align:center;display:inline-block"></span>
+          <button id="calNext" title="Next month">›</button>
+        </div>
+      </div>
+      <div id="calGrid" class="cal-grid"></div>
+      <div id="calDay" class="cal-day"></div>
     </section>
 
     <!-- Filters -->
@@ -110,15 +124,14 @@
       $("fCategory").innerHTML = `<option value="">All categories</option>` + CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join("");
       rebuildAssign();
       ["fSearch","fCategory","fStatus"].forEach(id => $(id).addEventListener("input", renderFeed));
+      initCal();
     }
     function rebuildAssign() {
-      const people = Object.values(USERS).map(u => u.name).filter(Boolean).sort();
-      const opts = GROUPS.concat(people.length ? ["— Staff —", ...people] : []);
-      $("cAssign").innerHTML = opts.map(o => o.startsWith("—") ? `<option disabled>${o}</option>` : `<option value="${o}">${o === "Anyone" ? "For: Anyone" : "For: " + o}</option>`).join("");
+      $("cAssign").innerHTML = GROUPS.map(o => `<option value="${o}"${o === "General" ? " selected" : ""}>For: ${o}</option>`).join("");
     }
     function subscribeUsers() {
       onSnapshot(collection(db, "users"), (snap) => {
-        USERS = {}; snap.forEach(d => USERS[d.id] = d.data()); rebuildAssign();
+        USERS = {}; snap.forEach(d => USERS[d.id] = d.data());
       }, (e) => console.warn(e));
     }
 
@@ -126,7 +139,7 @@
     function subscribePosts() {
       const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
       onSnapshot(q, (snap) => {
-        POSTS = []; snap.forEach(d => POSTS.push({ id: d.id, ...d.data() })); renderFeed();
+        POSTS = []; snap.forEach(d => POSTS.push({ id: d.id, ...d.data() })); renderFeed(); renderCalendar();
       }, (e) => {
         showErr("Can't reach the database. Make sure the Firestore security rules are published (see the setup steps).");
         console.error(e);
@@ -138,7 +151,7 @@
       if (!subject) { $("cSubject").focus(); return; }
       const data = {
         subject, body: $("cBody").value.trim(),
-        category: $("cCategory").value, assignTo: $("cAssign").value || "Anyone",
+        category: $("cCategory").value, assignTo: $("cAssign").value || "General",
         dueDate: $("cDue").value || null, urgent: $("cUrgent").checked,
         status: "open", createdBy: ME.uid, createdByName: ME.name,
         workingOn: null, workingOnName: null, commentCount: 0, createdAt: serverTimestamp()
@@ -154,8 +167,25 @@
     async function setStatus(id, status) { try { await updateDoc(doc(db,"posts",id), { status }); } catch(e){ console.error(e);} }
     async function toggleClaim(p) {
       const mine = p.workingOn === ME.uid;
-      try { await updateDoc(doc(db,"posts",p.id), mine ? { workingOn:null, workingOnName:null } : { workingOn:ME.uid, workingOnName:ME.name }); }
-      catch(e){ console.error(e);}
+      try {
+        if (mine) {
+          // release: free it up, and if it was in progress from my claim send it back to open
+          await updateDoc(doc(db,"posts",p.id), { workingOn:null, workingOnName:null, status: p.status === "done" ? "done" : "open" });
+        } else {
+          // take it: mark In Progress with my name
+          await updateDoc(doc(db,"posts",p.id), { workingOn:ME.uid, workingOnName:ME.name, status: p.status === "done" ? "done" : "inprogress" });
+          // if a manager takes it, mirror a copy onto the Admin Board
+          if (ME.admin) {
+            await setDoc(doc(db,"adminTasks",p.id), {
+              fromPostId: p.id, subject: p.subject, body: p.body || "",
+              category: p.category || "General", assignTo: p.assignTo || "General",
+              dueDate: p.dueDate || null, urgent: !!p.urgent, status: "inprogress",
+              takenById: ME.uid, takenByName: ME.name, postedByName: p.createdByName || "—",
+              createdAt: serverTimestamp()
+            }, { merge:true });
+          }
+        }
+      } catch(e){ console.error(e);}
     }
     async function removePost(id) { if (!confirm("Delete this post?")) return; try { await deleteDoc(doc(db,"posts",id)); } catch(e){ console.error(e);} }
 
@@ -175,11 +205,12 @@
 
     function card(p) {
       const c = document.createElement("div"); c.className = "post" + (p.urgent ? " urgent" : "");
+      c.dataset.pid = p.id;
       // top row: chips + status select
       const top = document.createElement("div"); top.className = "post-top";
       const chips = document.createElement("div"); chips.className = "chips";
       chips.appendChild(chip(p.category || "General", "cat"));
-      chips.appendChild(chip("For: " + (p.assignTo || "Anyone"), "for"));
+      chips.appendChild(chip("For: " + (p.assignTo || "General"), "for"));
       if (p.urgent) chips.appendChild(chip("Urgent", "urg"));
       if (p.dueDate) chips.appendChild(chip((overdue(p) ? "Overdue " : "Due ") + p.dueDate, overdue(p) ? "over" : "due"));
       top.appendChild(chips);
@@ -239,6 +270,57 @@
           }, (e)=>console.error(e));
         }
       } else { cc.style.display = "none"; }
+    }
+
+    // ---------- calendar ----------
+    let calYear, calMonth;
+    function ymdLocal(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+    function initCal() {
+      const t = new Date(); calYear = t.getFullYear(); calMonth = t.getMonth();
+      $("calPrev").addEventListener("click", () => { calMonth--; if (calMonth < 0){ calMonth = 11; calYear--; } $("calDay").style.display="none"; renderCalendar(); });
+      $("calNext").addEventListener("click", () => { calMonth++; if (calMonth > 11){ calMonth = 0; calYear++; } $("calDay").style.display="none"; renderCalendar(); });
+    }
+    function renderCalendar() {
+      const grid = $("calGrid"); if (!grid || calYear == null) return;
+      grid.innerHTML = "";
+      $("calTitle").textContent = new Date(calYear, calMonth, 1).toLocaleDateString(undefined, { month:"long", year:"numeric" });
+      ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d => { const el=document.createElement("div"); el.className="cal-dow"; el.textContent=d; grid.appendChild(el); });
+      // group active (not done) posts with due dates by day
+      const byDay = {};
+      POSTS.forEach(p => { if (p.dueDate && p.status !== "done") (byDay[p.dueDate] = byDay[p.dueDate] || []).push(p); });
+      const firstDow = new Date(calYear, calMonth, 1).getDay();
+      const days = new Date(calYear, calMonth + 1, 0).getDate();
+      const todayStr = ymdLocal(new Date());
+      for (let i = 0; i < firstDow; i++){ const b=document.createElement("div"); b.className="cal-cell empty"; grid.appendChild(b); }
+      for (let d = 1; d <= days; d++){
+        const ds = `${calYear}-${String(calMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        const cell = document.createElement("div"); cell.className = "cal-cell";
+        if (ds === todayStr) cell.classList.add("today");
+        const num = document.createElement("span"); num.className="cal-num"; num.textContent = d; cell.appendChild(num);
+        const items = byDay[ds];
+        if (items && items.length){
+          cell.classList.add("has");
+          const over = ds < todayStr, urg = items.some(p => p.urgent);
+          const dot = document.createElement("span"); dot.className = "cal-dot" + (over ? " over" : (urg ? " urg" : "")); dot.textContent = items.length; cell.appendChild(dot);
+          cell.addEventListener("click", () => showCalDay(ds, items));
+        }
+        grid.appendChild(cell);
+      }
+    }
+    function showCalDay(ds, items) {
+      const box = $("calDay"); box.style.display = "block"; box.innerHTML = "";
+      const h = document.createElement("div"); h.className = "cal-day-h"; h.textContent = "Due " + ds + " · " + items.length + " task" + (items.length>1?"s":""); box.appendChild(h);
+      items.forEach(p => {
+        const r = document.createElement("div"); r.className = "cal-day-item";
+        r.appendChild(chip(p.category || "General", "cat"));
+        const t = document.createElement("span"); t.textContent = p.subject; r.appendChild(t);
+        if (p.workingOnName){ const w=document.createElement("span"); w.style.cssText="margin-left:auto;color:var(--muted);font-size:.8rem"; w.textContent="• "+p.workingOnName; r.appendChild(w); }
+        r.addEventListener("click", () => {
+          const el = document.querySelector(`.post[data-pid="${p.id}"]`);
+          if (el){ el.scrollIntoView({ behavior:"smooth", block:"center" }); el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+        });
+        box.appendChild(r);
+      });
     }
 
     function escapeHtml(s){ return (s||"").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }

@@ -8,10 +8,10 @@ export const ADMINS = {
   "5cjAusU8YYORnXu2cxoxu5k6h9x2": { name: "Janet", color: "#8a4f9e" }  // plum
 };
 
-export const CATEGORIES = ["Front Desk", "Clinical", "Billing", "Admin", "Management", "Marketing"];
+export const CATEGORIES = ["Reception", "Clinical", "Admin", "Management", "General"];
 
-// "Assign to" targets: groups + Anyone (individual staff are appended at runtime)
-export const GROUPS = ["Anyone", "Management", "Front Desk", "Clinical", "Billing", "Admin", "Marketing"];
+// "For / assigned to" targets — same simple set as the categories.
+export const GROUPS = ["Reception", "Clinical", "Admin", "Management", "General"];
 
 export function isAdmin(uid) { return !!ADMINS[uid]; }
 
