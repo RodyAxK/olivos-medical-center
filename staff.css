@@ -123,7 +123,7 @@ textarea.in{min-height:70px;resize:vertical}
 .cal-nav button:hover{background:var(--cream-2)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .cal-dow{text-align:center;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding-bottom:4px}
-.cal-cell{position:relative;min-height:52px;border:1px solid var(--cream-2);border-radius:10px;padding:6px;background:#fff}
+.cal-cell{position:relative;min-height:52px;min-width:0;overflow:hidden;border:1px solid var(--cream-2);border-radius:10px;padding:6px;background:#fff}
 .cal-cell.empty{background:transparent;border:none}
 .cal-cell.today{border-color:var(--olive);box-shadow:inset 0 0 0 1px var(--olive)}
 .cal-cell.has{cursor:pointer}
@@ -222,7 +222,7 @@ textarea.in{min-height:70px;resize:vertical}
 
 /* calendar (admin: bars, taller cells) */
 .cal-admin .cal-cell{min-height:88px;align-content:start}
-.cal-bar{font-size:.66rem;color:#fff;border-radius:4px;padding:1px 6px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;line-height:1.5}
+.cal-bar{display:block;max-width:100%;font-size:.66rem;color:#fff;border-radius:4px;padding:1px 6px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;line-height:1.5}
 .cal-more{font-size:.64rem;color:var(--muted);margin-top:3px;cursor:pointer}
 .cal-nav .today-btn{width:auto;height:32px;padding:0 12px;border-radius:8px;font-size:.8rem;font-weight:600}
 
