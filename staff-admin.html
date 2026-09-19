@@ -18,6 +18,8 @@
       <div class="t">Admin Board<small>Rody &amp; Janet</small></div>
     </div>
     <div class="app-user">
+      <span class="saved" id="saved"><span class="sdot"></span> Saved</span>
+      <div class="seg"><button id="tabBoard" class="on">Board</button><button id="tabCal">Calendar</button></div>
       <a class="btn btn-ghost" href="staff-portal.html">← Dashboard</a>
       <span class="badge" id="userBadge">•</span>
       <span class="who" id="userWho">…</span>
@@ -29,7 +31,7 @@
     <div id="errBanner" class="err-banner" style="display:none"></div>
 
     <div class="toolbar">
-      <button class="btn btn-gold" id="newBtn">+ New card</button>
+      <button class="btn btn-gold" id="newBtn">+ New Task</button>
       <button class="btn btn-ghost" id="importBtn">⬆ Import / Pull in</button>
       <button class="btn btn-ghost" id="exportBtn">⬇ Export / Push out</button>
       <span class="spacer"></span>
@@ -42,36 +44,50 @@
       </select>
     </div>
 
-    <section class="upcoming">
-      <h3>⏰ Upcoming &amp; reminders <span style="font-weight:500;color:var(--muted);font-size:.85rem">— due soon or overdue</span></h3>
-      <div id="upRow" class="up-row"></div>
+    <div class="stats" id="stats"></div>
+
+    <section class="reminders">
+      <h3 id="remHead">Deadlines &amp; reminders</h3>
+      <div id="remRow" class="rem-row"></div>
     </section>
 
-    <section class="cal panel">
-      <div class="cal-head">
-        <h3>📅 Due dates</h3>
-        <div class="cal-nav">
-          <button id="calPrev" title="Previous month">‹</button>
-          <span id="calTitle" style="font-weight:700;color:var(--olive-dark);min-width:150px;text-align:center;display:inline-block"></span>
-          <button id="calNext" title="Next month">›</button>
-        </div>
+    <!-- BOARD VIEW -->
+    <div id="boardView">
+      <div class="board" id="board"></div>
+    </div>
+
+    <!-- EXPANDED LANE VIEW -->
+    <div id="laneView" style="display:none">
+      <div class="lane-head">
+        <button class="btn btn-ghost" id="laneBack">← Back to board</button>
+        <h2 id="laneName">Lane</h2>
+        <span class="cat-chip" id="laneCount">0</span>
       </div>
-      <div id="calGrid" class="cal-grid"></div>
-      <div id="calDay" class="cal-day"></div>
-    </section>
+      <div class="lane-grid" id="laneGrid"></div>
+    </div>
 
-    <div class="board" id="board">
-      <div class="col" data-col="todo"><div class="col-head"><span class="name">To Do</span><span class="count" id="cnt-todo">0</span></div></div>
-      <div class="col" data-col="inprogress"><div class="col-head"><span class="name">In Progress</span><span class="count" id="cnt-inprogress">0</span></div></div>
-      <div class="col" data-col="waiting"><div class="col-head"><span class="name">Waiting</span><span class="count" id="cnt-waiting">0</span></div></div>
-      <div class="col" data-col="done"><div class="col-head"><span class="name">Done</span><span class="count" id="cnt-done">0</span></div></div>
+    <!-- CALENDAR VIEW -->
+    <div id="calView" style="display:none">
+      <section class="cal panel cal-admin">
+        <div class="cal-head">
+          <h3>📅 Calendar</h3>
+          <div class="cal-nav">
+            <button id="calPrev" title="Previous month">‹</button>
+            <button class="btn btn-gold today-btn" id="calToday">Today</button>
+            <span id="calTitle" style="font-weight:700;color:var(--olive-dark);min-width:150px;text-align:center;display:inline-block"></span>
+            <button id="calNext" title="Next month">›</button>
+          </div>
+        </div>
+        <div id="calGrid" class="cal-grid"></div>
+        <div id="calDay" class="cal-day"></div>
+      </section>
     </div>
   </main>
 
   <!-- New / Edit modal -->
   <div class="modal-bg" id="modalBg">
     <div class="modal">
-      <h3 id="mTitle">New card</h3>
+      <h3 id="mTitle">New task</h3>
       <input type="hidden" id="mId" />
       <div class="field"><label>Title</label><input id="mTitleIn" class="in" type="text" placeholder="Short task title" /></div>
       <div class="field"><label>Notes / details</label><textarea id="mNotes" class="in" placeholder="Context, phone numbers, references…"></textarea></div>
@@ -80,14 +96,12 @@
         <div class="field"><label>Owner</label><select id="mOwner" class="in"><option value="">Unassigned</option><option value="Rody">Rody</option><option value="Janet">Janet</option></select></div>
       </div>
       <div class="row2">
-        <div class="field"><label>Status / column</label><select id="mStatus" class="in"><option value="todo">To Do</option><option value="inprogress">In Progress</option><option value="waiting">Waiting</option><option value="done">Done</option></select></div>
-        <div class="field"><label>Recurs</label><select id="mRecur" class="in"><option value="">No</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
+        <div class="field"><label>Lane</label><select id="mStatus" class="in"><option value="todo">To Do</option><option value="inprogress">In Progress</option><option value="waiting">Waiting</option><option value="done">Done</option></select></div>
+        <div class="field"><label>Repeats</label><select id="mRecur" class="in"><option value="">No</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
       </div>
-      <div class="row2">
-        <div class="field"><label>Due date</label><input id="mDue" class="in" type="date" /></div>
-        <div class="field"><label>Reminder date</label><input id="mReminder" class="in" type="date" /></div>
-      </div>
+      <div class="field"><label>Due date</label><input id="mDue" class="in" type="date" /></div>
       <div class="field"><label class="chk"><input type="checkbox" id="mUrgent" /> Mark urgent</label></div>
+      <div class="field"><label class="chk"><input type="checkbox" id="mDayOf" /> Show on the board only on its due date</label></div>
       <div class="modal-foot">
         <button class="btn btn-ghost del-left" id="mDelete" style="display:none;color:#b4472b">Delete</button>
         <button class="btn btn-ghost" id="mCancel">Cancel</button>
@@ -119,291 +133,345 @@
     import { ADMINS, isAdmin, colorFor } from "./staff-config.js";
 
     const $ = (id) => document.getElementById(id);
-    let ME = null;
-    let RAW = {};     // id -> data (includes deleted tombstones)
-    let TASKS = [];   // active tasks only
-    const STATUSES = ["todo","inprogress","waiting","done"];
+
+    // --- constants matching the local board ---
+    const DUE_SOON_DAYS = 14;
+    const BOARD_LEAD_DAYS = 7;
+    const DONE_CLEAR_DAYS = 14;
+    const LANES = [
+      { key:"todo",       name:"To Do",       color:"#f59e0b" },
+      { key:"inprogress", name:"In Progress", color:"#12b3ac" },
+      { key:"waiting",    name:"Waiting",     color:"#64748b" },
+      { key:"done",       name:"Done",        color:"#22c55e" }
+    ];
+    const LANE = {}; LANES.forEach(l => LANE[l.key] = l);
     const OWNER_COLORS = {}; Object.values(ADMINS).forEach(a => OWNER_COLORS[a.name] = a.color);
     function ownerColor(n){ return OWNER_COLORS[n] || "#9a8f6a"; }
 
-    function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"), 2600); }
-    function showErr(msg){ const b=$("errBanner"); b.textContent=msg; b.style.display="block"; }
-    function escapeHtml(s){ return (s||"").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
-    function nowISO(){ return new Date().toISOString(); }
-    function uid(){ return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
-    function ymdLocal(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
-    function todayStr(){ return ymdLocal(new Date()); }
+    let ME = null, RAW = {}, TASKS = [];
+    let view = "board";       // board | calendar
+    let expandedLane = null;
 
-    // ---------- auth gate ----------
+    // --- helpers ---
+    function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),2600); }
+    function showErr(msg){ const b=$("errBanner"); b.textContent=msg; b.style.display="block"; }
+    function esc(s){ return (s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+    function nowISO(){ return new Date().toISOString(); }
+    function uid(){ return "t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+    function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+    function today(){ return ymd(new Date()); }
+    function addDays(ds, n){ const d=new Date(ds+"T00:00:00"); d.setDate(d.getDate()+n); return ymd(d); }
+    function daysBetween(a, b){ return Math.round((new Date(b+"T00:00:00") - new Date(a+"T00:00:00"))/86400000); }
+
+    // --- auth gate ---
     onAuthStateChanged(auth, (user) => {
       if (!user) { location.replace("staff-login.html"); return; }
       if (!isAdmin(user.uid)) { location.replace("staff-portal.html"); return; }
-      ME = { uid: user.uid, name: ADMINS[user.uid].name, color: colorFor(user.uid) };
+      ME = { uid:user.uid, name:ADMINS[user.uid].name, color:colorFor(user.uid) };
       $("userWho").textContent = ME.name;
       $("userBadge").textContent = (ME.name[0]||"A").toUpperCase();
       $("userBadge").style.background = ME.color;
-      initCal(); wireUI(); subscribe();
+      buildColumns(); initCal(); wireUI(); subscribe();
     });
-    $("logoutBtn").addEventListener("click", async () => { await signOut(auth); location.replace("staff-login.html"); });
+    $("logoutBtn").addEventListener("click", async ()=>{ await signOut(auth); location.replace("staff-login.html"); });
 
-    // ---------- live data ----------
+    // --- live data ---
     function subscribe(){
-      onSnapshot(collection(db, "adminTasks"), (snap) => {
-        RAW = {}; snap.forEach(d => RAW[d.id] = { id:d.id, ...d.data() });
-        TASKS = Object.values(RAW).filter(t => !t.deleted);
+      onSnapshot(collection(db,"adminTasks"), (snap)=>{
+        RAW={}; snap.forEach(d=> RAW[d.id]={ id:d.id, ...d.data() });
+        TASKS = Object.values(RAW).filter(t=>!t.deleted);
+        $("saved").innerHTML = '<span class="sdot"></span> All changes saved';
         render();
-      }, (e) => { showErr("Can't reach the Admin Board data. Make sure you're signed in as an admin and the security rules are published."); console.error(e); });
+      }, (e)=>{ showErr("Can't reach the Admin Board data. Make sure you're signed in as an admin."); console.error(e); });
     }
 
-    // ---------- write helpers ----------
-    async function saveTask(t){ try { await setDoc(doc(db,"adminTasks",t.id), t, { merge:false }); } catch(e){ console.error(e); toast("Couldn't save — check your connection."); } }
-    async function patchTask(id, fields){ try { await setDoc(doc(db,"adminTasks",id), { ...fields, updatedAt: nowISO() }, { merge:true }); } catch(e){ console.error(e); } }
-    async function deleteTask(id){ try { await setDoc(doc(db,"adminTasks",id), { deleted:true, updatedAt: nowISO() }, { merge:true }); } catch(e){ console.error(e); } }
-
-    // ---------- render ----------
-    function render(){ renderBoard(); renderUpcoming(); renderCalendar(); }
-
-    function ownerFilterVal(){ return $("ownerFilter").value; }
-    function passesOwner(t){ const f=ownerFilterVal(); if(!f) return true; if(f==="__none") return !t.owner; return t.owner===f; }
-
-    function renderBoard(){
-      STATUSES.forEach(s => {
-        const col = document.querySelector(`.col[data-col="${s}"]`);
-        col.querySelectorAll(".kcard").forEach(n => n.remove());
-        const list = TASKS.filter(t => (t.status||"todo")===s && passesOwner(t))
-          .sort((a,b) => (a.due||"9999").localeCompare(b.due||"9999"));
-        $("cnt-"+s).textContent = list.length;
-        list.forEach(t => col.appendChild(kcard(t)));
-      });
+    async function saveTask(t){ try{ await setDoc(doc(db,"adminTasks",t.id), t, {merge:false}); }catch(e){ console.error(e); toast("Couldn't save — check your connection."); } }
+    async function patchTask(id, fields){ try{ await setDoc(doc(db,"adminTasks",id), { ...fields, updatedAt:nowISO() }, {merge:true}); }catch(e){ console.error(e); } }
+    async function deleteTask(id){ try{ await setDoc(doc(db,"adminTasks",id), { deleted:true, updatedAt:nowISO() }, {merge:true}); }catch(e){ console.error(e); } }
+    async function moveTo(id, status){
+      const fields = { status };
+      fields.completedAt = (status==="done") ? today() : "";
+      await patchTask(id, fields);
     }
 
-    function chip(text, cls){ const s=document.createElement("span"); s.className="chip "+(cls||""); s.textContent=text; return s; }
-    function overdue(t){ return t.due && t.status!=="done" && t.due < todayStr(); }
-
-    function kcard(t){
-      const ex = t.extra || {};
-      const c = document.createElement("div");
-      c.className = "kcard" + (ex.urgent ? " urgent" : "");
-      c.dataset.tid = t.id; c.draggable = true;
-      c.addEventListener("dragstart", (e)=>{ e.dataTransfer.setData("text/plain", t.id); c.classList.add("dragging"); });
-      c.addEventListener("dragend", ()=> c.classList.remove("dragging"));
-
-      const top = document.createElement("div"); top.className="kcard-top";
-      const own = document.createElement("span"); own.className="own"; own.style.background=ownerColor(t.owner);
-      own.textContent = t.owner ? t.owner[0].toUpperCase() : "?"; own.title = t.owner || "Unassigned";
-      top.appendChild(own);
-      if (t.category) top.appendChild(chip(t.category, "cat"));
-      if (ex.urgent) top.appendChild(chip("Urgent", "urg"));
-      if (t.source==="feed") top.appendChild(chip("From feed", "feed"));
-      c.appendChild(top);
-
-      const h = document.createElement("div"); h.className="k-title"; h.textContent=t.title||"(untitled)";
-      h.addEventListener("click", ()=> openEdit(t)); c.appendChild(h);
-
-      if (t.notes){ const n=document.createElement("div"); n.className="k-notes"; n.textContent=t.notes;
-        n.addEventListener("click", ()=> n.classList.toggle("open")); c.appendChild(n); }
-
-      const meta = document.createElement("div"); meta.className="k-meta";
-      if (t.due) meta.appendChild(chip((overdue(t)?"Overdue ":"Due ")+t.due, overdue(t)?"over":"due"));
-      if (ex.recur) meta.appendChild(chip("↻ "+ex.recur, "recur"));
-
-      const move = document.createElement("select"); move.className="k-move";
-      [["todo","To Do"],["inprogress","In Progress"],["waiting","Waiting"],["done","Done"]].forEach(([v,l])=>{
-        const o=document.createElement("option"); o.value=v; o.textContent=l; if(v===(t.status||"todo"))o.selected=true; move.appendChild(o); });
-      move.addEventListener("change", ()=> patchTask(t.id, { status: move.value }));
-      const acts = document.createElement("div"); acts.className="k-actions"; acts.appendChild(move);
-      meta.appendChild(acts);
-      c.appendChild(meta);
-      return c;
+    // --- filters / visibility rules ---
+    function passesOwner(t){ const f=$("ownerFilter").value; if(!f) return true; if(f==="__none") return !t.owner; return t.owner===f; }
+    function autoCleared(t){ return t.status==="done" && t.completedAt && daysBetween(t.completedAt, today()) > DONE_CLEAR_DAYS; }
+    // A dated task lives on the calendar/reminders (not in its lane) when it's far off or day-of-only and not due yet.
+    function isParked(t){
+      if (t.status==="done") return false;
+      if (t.due){
+        if (t.due > addDays(today(), BOARD_LEAD_DAYS)) return true;           // scheduled ahead (>7 days)
+        if (t.extra && t.extra.dayOf && t.due > today()) return true;         // "day of" and not due yet
+      }
+      return false;
     }
 
-    // drag/drop onto columns
-    document.querySelectorAll(".col").forEach(col => {
-      col.addEventListener("dragover", (e)=>{ e.preventDefault(); col.classList.add("drag-over"); });
-      col.addEventListener("dragleave", ()=> col.classList.remove("drag-over"));
-      col.addEventListener("drop", (e)=>{ e.preventDefault(); col.classList.remove("drag-over");
-        const id = e.dataTransfer.getData("text/plain"); const s = col.dataset.col;
-        if (id && s) patchTask(id, { status: s }); });
-    });
+    // --- render orchestration ---
+    function render(){
+      renderStats(); renderReminders();
+      if (view==="calendar"){ show("cal"); renderCalendar(); }
+      else if (expandedLane){ show("lane"); renderLane(); }
+      else { show("board"); renderBoard(); }
+    }
+    function show(which){
+      $("boardView").style.display = which==="board" ? "" : "none";
+      $("laneView").style.display  = which==="lane"  ? "" : "none";
+      $("calView").style.display   = which==="cal"   ? "" : "none";
+      $("tabBoard").classList.toggle("on", view==="board");
+      $("tabCal").classList.toggle("on", view==="calendar");
+    }
 
-    // ---------- upcoming ----------
-    function renderUpcoming(){
-      const row = $("upRow"); row.innerHTML="";
-      const today = todayStr();
-      const in14 = ymdLocal(new Date(Date.now()+14*86400000));
-      const list = TASKS.filter(t => t.status!=="done" && passesOwner(t) && (
-        (t.due && t.due <= in14) || (t.reminder && t.reminder <= in14)
-      )).sort((a,b)=> (a.due||a.reminder||"9999").localeCompare(b.due||b.reminder||"9999"));
-      if (!list.length){ row.innerHTML = `<div class="up-empty">Nothing due in the next two weeks. 🎉</div>`; return; }
-      list.forEach(t => {
-        const d = t.due || t.reminder;
-        const el = document.createElement("div");
-        el.className = "up-item" + (d < today ? " over" : ((t.extra&&t.extra.urgent) ? " urg" : ""));
-        const ttl = document.createElement("div"); ttl.className="ttl"; ttl.textContent = t.title||"(untitled)"; el.appendChild(ttl);
-        const sub = document.createElement("div"); sub.className="sub";
-        sub.textContent = (d < today ? "Overdue · " : "Due ") + d + (t.owner ? " · "+t.owner : "");
-        el.appendChild(sub);
-        el.addEventListener("click", ()=> jumpTo(t.id));
+    // --- stats ---
+    function renderStats(){
+      const vis = TASKS.filter(passesOwner).filter(t=>!autoCleared(t));
+      const open = vis.filter(t=>t.status!=="done").length;
+      const urgent = vis.filter(t=>t.status!=="done" && t.extra && t.extra.urgent).length;
+      const scheduled = vis.filter(isParked).length;
+      const done = vis.filter(t=>t.status==="done").length;
+      $("stats").innerHTML =
+        stat("#6f7f2e", open, "open") + stat("#ef4444", urgent, "urgent") +
+        stat("#b8912f", scheduled, "scheduled") + stat("#22c55e", done, "done");
+    }
+    function stat(color, n, label){ return `<span class="stat"><span class="sd" style="background:${color}"></span><b>${n}</b> ${label}</span>`; }
+
+    // --- reminders strip ---
+    function renderReminders(){
+      const row=$("remRow"); row.innerHTML="";
+      const t0=today(), soonEdge=addDays(t0, DUE_SOON_DAYS);
+      const list = TASKS.filter(passesOwner).filter(t=>t.status!=="done" && !autoCleared(t) && t.due)
+        .sort((a,b)=>a.due.localeCompare(b.due));
+      const overdue = list.filter(t=>t.due < t0).length;
+      $("remHead").textContent = `Deadlines & reminders${overdue?` · ${overdue} overdue`:""}`;
+      if(!list.length){ row.innerHTML=`<div class="rem-empty">Nothing scheduled. 🎉</div>`; return; }
+      list.forEach(t=>{
+        let cls="sched"; if(t.due < t0) cls="over"; else if(t.due <= soonEdge) cls="soon";
+        const el=document.createElement("div"); el.className="rem-chip "+cls;
+        el.innerHTML=`<div class="rt">${esc(t.title)}</div><div class="rd">${cls==="over"?"Overdue · ":"Due "}${t.due}${t.owner?" · "+esc(t.owner):""}</div>`;
+        el.addEventListener("click", ()=>openEdit(t));
         row.appendChild(el);
       });
     }
 
-    function jumpTo(id){
-      const el = document.querySelector(`.kcard[data-tid="${id}"]`);
-      if (el){ el.scrollIntoView({behavior:"smooth", block:"center"}); el.classList.remove("flash"); void el.offsetWidth; el.style.boxShadow="0 0 0 3px var(--gold)"; setTimeout(()=> el.style.boxShadow="", 1400); }
+    // --- board (4 even columns) ---
+    function buildColumns(){
+      const board=$("board"); board.innerHTML="";
+      LANES.forEach(l=>{
+        const col=document.createElement("div"); col.className="col"; col.dataset.col=l.key;
+        col.innerHTML =
+          `<div class="col-head">
+             <button class="col-pill" style="background:${l.color}" data-lane="${l.key}">${l.name} <span class="cnt" id="cnt-${l.key}">0</span></button>
+             <button class="col-add" data-add="${l.key}" title="Add to ${l.name}">+</button>
+           </div>
+           <div class="col-body" id="body-${l.key}"></div>`;
+        board.appendChild(col);
+      });
+      // wire pills + adds + drop targets
+      board.querySelectorAll(".col-pill").forEach(b=> b.addEventListener("click", ()=>{ expandedLane=b.dataset.lane; view="board"; render(); }));
+      board.querySelectorAll(".col-add").forEach(b=> b.addEventListener("click", ()=> openNew(b.dataset.add)));
+      board.querySelectorAll(".col").forEach(col=>{
+        col.addEventListener("dragover", e=>{ e.preventDefault(); col.classList.add("drag-over"); });
+        col.addEventListener("dragleave", ()=> col.classList.remove("drag-over"));
+        col.addEventListener("drop", e=>{ e.preventDefault(); col.classList.remove("drag-over");
+          const id=e.dataTransfer.getData("text/plain"); if(id) moveTo(id, col.dataset.col); });
+      });
+    }
+    function renderBoard(){
+      LANES.forEach(l=>{
+        const body=$("body-"+l.key); body.innerHTML="";
+        let list = TASKS.filter(passesOwner).filter(t=>(t.status||"todo")===l.key && !autoCleared(t));
+        if (l.key!=="done") list = list.filter(t=>!isParked(t));
+        list.sort(sortByDue);
+        $("cnt-"+l.key).textContent = list.length;
+        if(!list.length){ body.innerHTML=`<div class="col-empty">—</div>`; return; }
+        list.forEach(t=> body.appendChild(card(t)));
+      });
+    }
+    function sortByDue(a,b){
+      const au=a.extra&&a.extra.urgent?0:1, bu=b.extra&&b.extra.urgent?0:1;
+      if(au!==bu) return au-bu;
+      return (a.due||"9999-99-99").localeCompare(b.due||"9999-99-99");
     }
 
-    // ---------- calendar ----------
-    let calYear, calMonth;
+    // --- a card ---
+    function card(t){
+      const ex=t.extra||{};
+      const lane=LANE[t.status]||LANE.todo;
+      const c=document.createElement("div"); c.className="kcard"; c.dataset.tid=t.id; c.draggable=true;
+      c.style.borderLeftColor = ex.urgent ? "#ef4444" : lane.color;
+      c.addEventListener("dragstart", e=>{ e.dataTransfer.setData("text/plain", t.id); c.classList.add("dragging"); });
+      c.addEventListener("dragend", ()=> c.classList.remove("dragging"));
+      c.addEventListener("click", e=>{ if(e.target.closest("button")) return; openEdit(t); });
+
+      // chips row
+      const chips=document.createElement("div"); chips.className="k-chips";
+      if(ex.urgent){ const u=document.createElement("span"); u.className="urgent-pill"; u.textContent="URGENT"; chips.appendChild(u); }
+      if(t.category){ const cat=document.createElement("span"); cat.className="cat-chip"; cat.textContent=t.category; chips.appendChild(cat); }
+      if(t.source==="feed"){ const f=document.createElement("span"); f.className="feed-chip"; f.textContent="From feed"; chips.appendChild(f); }
+      c.appendChild(chips);
+
+      const h=document.createElement("div"); h.className="k-title"; h.textContent=t.title||"(untitled)"; c.appendChild(h);
+      if(t.notes){ const n=document.createElement("div"); n.className="k-note"; n.textContent=t.notes; c.appendChild(n); }
+
+      // meta chips (due, recur, owner)
+      const meta=document.createElement("div"); meta.className="k-chips";
+      if(t.due){ const d=document.createElement("span"); d.className="due-chip "+dueState(t); d.textContent="📅 "+t.due; meta.appendChild(d); }
+      if(ex.recur){ const r=document.createElement("span"); r.className="recur-chip"; r.textContent="↻ "+ex.recur; meta.appendChild(r); }
+      if(t.owner){ const o=document.createElement("span"); o.className="owner-chip"; o.style.background=ownerColor(t.owner); o.textContent=t.owner; meta.appendChild(o); }
+      c.appendChild(meta);
+
+      // footer: move arrows + edit
+      const foot=document.createElement("div"); foot.className="k-foot";
+      const idx=LANES.findIndex(l=>l.key===(t.status||"todo"));
+      const left=document.createElement("button"); left.className="k-arrow"; left.textContent="←"; left.title="Move left";
+      if(idx<=0) left.disabled=true; else left.addEventListener("click", ()=> moveTo(t.id, LANES[idx-1].key));
+      const right=document.createElement("button"); right.className="k-arrow"; right.textContent="→"; right.title="Move right";
+      if(idx>=LANES.length-1) right.disabled=true; else right.addEventListener("click", ()=> moveTo(t.id, LANES[idx+1].key));
+      foot.appendChild(left); foot.appendChild(right);
+      const sp=document.createElement("span"); sp.className="k-spacer"; foot.appendChild(sp);
+      const ed=document.createElement("button"); ed.className="k-edit"; ed.textContent="✎"; ed.title="Edit"; ed.addEventListener("click", ()=>openEdit(t)); foot.appendChild(ed);
+      c.appendChild(foot);
+      return c;
+    }
+    function dueState(t){ const t0=today(); if(t.status!=="done" && t.due < t0) return "over"; if(t.due <= addDays(t0, DUE_SOON_DAYS)) return "soon"; return ""; }
+
+    // --- expanded lane grid ---
+    function renderLane(){
+      const l=LANE[expandedLane]||LANE.todo;
+      $("laneName").textContent=l.name; $("laneName").style.color=l.color;
+      let list = TASKS.filter(passesOwner).filter(t=>(t.status||"todo")===l.key && !autoCleared(t)).sort(sortByDue);
+      $("laneCount").textContent = list.length+" task"+(list.length!==1?"s":"");
+      const grid=$("laneGrid"); grid.innerHTML="";
+      if(!list.length){ grid.innerHTML=`<div class="col-empty">Nothing here yet.</div>`; return; }
+      list.forEach(t=> grid.appendChild(card(t)));
+    }
+    $("laneBack").addEventListener("click", ()=>{ expandedLane=null; render(); });
+
+    // --- calendar (bars by lane) ---
+    let calY, calM;
     function initCal(){
-      const t=new Date(); calYear=t.getFullYear(); calMonth=t.getMonth();
-      $("calPrev").addEventListener("click", ()=>{ calMonth--; if(calMonth<0){calMonth=11;calYear--;} $("calDay").style.display="none"; renderCalendar(); });
-      $("calNext").addEventListener("click", ()=>{ calMonth++; if(calMonth>11){calMonth=0;calYear++;} $("calDay").style.display="none"; renderCalendar(); });
+      const t=new Date(); calY=t.getFullYear(); calM=t.getMonth();
+      $("calPrev").addEventListener("click", ()=>{ calM--; if(calM<0){calM=11;calY--;} $("calDay").style.display="none"; renderCalendar(); });
+      $("calNext").addEventListener("click", ()=>{ calM++; if(calM>11){calM=0;calY++;} $("calDay").style.display="none"; renderCalendar(); });
+      $("calToday").addEventListener("click", ()=>{ const n=new Date(); calY=n.getFullYear(); calM=n.getMonth(); $("calDay").style.display="none"; renderCalendar(); });
     }
     function renderCalendar(){
-      const grid=$("calGrid"); if(!grid||calYear==null) return; grid.innerHTML="";
-      $("calTitle").textContent = new Date(calYear,calMonth,1).toLocaleDateString(undefined,{month:"long",year:"numeric"});
+      const grid=$("calGrid"); if(!grid) return; grid.innerHTML="";
+      $("calTitle").textContent=new Date(calY,calM,1).toLocaleDateString(undefined,{month:"long",year:"numeric"});
       ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{ const el=document.createElement("div"); el.className="cal-dow"; el.textContent=d; grid.appendChild(el); });
       const byDay={};
-      TASKS.forEach(t=>{ if(t.due && t.status!=="done" && passesOwner(t)) (byDay[t.due]=byDay[t.due]||[]).push(t); });
-      const firstDow=new Date(calYear,calMonth,1).getDay();
-      const days=new Date(calYear,calMonth+1,0).getDate();
-      const today=todayStr();
-      for(let i=0;i<firstDow;i++){ const b=document.createElement("div"); b.className="cal-cell empty"; grid.appendChild(b); }
+      TASKS.filter(passesOwner).forEach(t=>{ if(t.due && !autoCleared(t)) (byDay[t.due]=byDay[t.due]||[]).push(t); });
+      const first=new Date(calY,calM,1).getDay(), days=new Date(calY,calM+1,0).getDate(), t0=today();
+      for(let i=0;i<first;i++){ const b=document.createElement("div"); b.className="cal-cell empty"; grid.appendChild(b); }
       for(let d=1; d<=days; d++){
-        const ds=`${calYear}-${String(calMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-        const cell=document.createElement("div"); cell.className="cal-cell";
-        if(ds===today) cell.classList.add("today");
+        const ds=`${calY}-${String(calM+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        const cell=document.createElement("div"); cell.className="cal-cell"; if(ds===t0) cell.classList.add("today");
         const num=document.createElement("span"); num.className="cal-num"; num.textContent=d; cell.appendChild(num);
-        const items=byDay[ds];
-        if(items&&items.length){
-          cell.classList.add("has");
-          const over=ds<today, urg=items.some(t=>t.extra&&t.extra.urgent);
-          const dot=document.createElement("span"); dot.className="cal-dot"+(over?" over":(urg?" urg":"")); dot.textContent=items.length; cell.appendChild(dot);
-          cell.addEventListener("click", ()=> showCalDay(ds, items));
-        }
+        const items=byDay[ds]||[];
+        items.slice(0,3).forEach(t=>{ const bar=document.createElement("div"); bar.className="cal-bar";
+          bar.style.background=(t.extra&&t.extra.urgent)?"#ef4444":(LANE[t.status]||LANE.todo).color;
+          bar.textContent=t.title; bar.title=t.title;
+          bar.addEventListener("click", e=>{ e.stopPropagation(); openEdit(t); }); cell.appendChild(bar); });
+        if(items.length>3){ const m=document.createElement("div"); m.className="cal-more"; m.textContent="+"+(items.length-3)+" more"; cell.appendChild(m); }
+        if(items.length) cell.addEventListener("click", ()=> showCalDay(ds, items));
         grid.appendChild(cell);
       }
     }
     function showCalDay(ds, items){
       const box=$("calDay"); box.style.display="block"; box.innerHTML="";
-      const h=document.createElement("div"); h.className="cal-day-h"; h.textContent="Due "+ds+" · "+items.length+" task"+(items.length>1?"s":""); box.appendChild(h);
-      items.forEach(t=>{
-        const r=document.createElement("div"); r.className="cal-day-item";
-        r.appendChild(chip(t.category||"General","cat"));
+      const h=document.createElement("div"); h.className="cal-day-h"; h.textContent="Due "+ds+" · "+items.length+" task"+(items.length!==1?"s":""); box.appendChild(h);
+      items.forEach(t=>{ const r=document.createElement("div"); r.className="cal-day-item";
+        const dot=document.createElement("span"); dot.className="own"; dot.style.cssText="width:12px;height:12px;background:"+((t.extra&&t.extra.urgent)?"#ef4444":(LANE[t.status]||LANE.todo).color); r.appendChild(dot);
         const s=document.createElement("span"); s.textContent=t.title; r.appendChild(s);
         if(t.owner){ const w=document.createElement("span"); w.style.cssText="margin-left:auto;color:var(--muted);font-size:.8rem"; w.textContent="• "+t.owner; r.appendChild(w); }
-        r.addEventListener("click", ()=> jumpTo(t.id));
-        box.appendChild(r);
-      });
+        r.addEventListener("click", ()=>openEdit(t)); box.appendChild(r); });
     }
 
-    // ---------- new / edit modal ----------
-    function openNew(){
-      $("mTitle").textContent="New card"; $("mId").value="";
+    // --- new / edit modal ---
+    function openNew(lane){
+      $("mTitle").textContent="New task"; $("mId").value="";
       $("mTitleIn").value=""; $("mNotes").value=""; $("mCat").value=""; $("mOwner").value=ME.name;
-      $("mStatus").value="todo"; $("mRecur").value=""; $("mDue").value=""; $("mReminder").value=""; $("mUrgent").checked=false;
-      $("mDelete").style.display="none";
-      $("modalBg").classList.add("show");
+      $("mStatus").value=lane||"todo"; $("mRecur").value=""; $("mDue").value=""; $("mUrgent").checked=false; $("mDayOf").checked=false;
+      $("mDelete").style.display="none"; $("modalBg").classList.add("show"); setTimeout(()=>$("mTitleIn").focus(),50);
     }
     function openEdit(t){
-      $("mTitle").textContent="Edit card"; $("mId").value=t.id;
+      $("mTitle").textContent="Edit task"; $("mId").value=t.id;
       $("mTitleIn").value=t.title||""; $("mNotes").value=t.notes||""; $("mCat").value=t.category||"";
       $("mOwner").value=t.owner||""; $("mStatus").value=t.status||"todo";
-      $("mRecur").value=(t.extra&&t.extra.recur)||""; $("mDue").value=t.due||""; $("mReminder").value=t.reminder||"";
-      $("mUrgent").checked=!!(t.extra&&t.extra.urgent);
-      $("mDelete").style.display=""; $("mDelete")._id=t.id;
-      $("modalBg").classList.add("show");
+      $("mRecur").value=(t.extra&&t.extra.recur)||""; $("mDue").value=t.due||"";
+      $("mUrgent").checked=!!(t.extra&&t.extra.urgent); $("mDayOf").checked=!!(t.extra&&t.extra.dayOf);
+      $("mDelete").style.display=""; $("mDelete")._id=t.id; $("modalBg").classList.add("show");
     }
     function closeModal(){ $("modalBg").classList.remove("show"); }
     async function saveModal(){
       const title=$("mTitleIn").value.trim(); if(!title){ $("mTitleIn").focus(); return; }
-      const id=$("mId").value || uid();
-      const existing = RAW[id] || {};
-      const t = {
+      const id=$("mId").value || uid(); const existing=RAW[id]||{};
+      const status=$("mStatus").value;
+      const t={
         id, title, notes:$("mNotes").value.trim(), category:$("mCat").value.trim()||"General",
-        status:$("mStatus").value, owner:$("mOwner").value,
-        due:$("mDue").value||"", reminder:$("mReminder").value||"",
-        source: existing.source || "manual", fromPostId: existing.fromPostId || "",
-        extra: { urgent:$("mUrgent").checked, recur:$("mRecur").value||null, dayOf: !!$("mReminder").value },
-        updatedAt: nowISO(), deleted:false
+        status, owner:$("mOwner").value, due:$("mDue").value||"", reminder:existing.reminder||"",
+        source:existing.source||"manual", fromPostId:existing.fromPostId||"",
+        completedAt: status==="done" ? (existing.completedAt||today()) : "",
+        extra:{ urgent:$("mUrgent").checked, recur:$("mRecur").value||null, dayOf:$("mDayOf").checked },
+        updatedAt:nowISO(), deleted:false
       };
-      await saveTask(t); closeModal(); toast(existing.id ? "Card updated" : "Card added");
+      await saveTask(t); closeModal(); toast(existing.id?"Task updated":"Task added");
     }
 
-    // ---------- import / export ----------
-    function normStatus(s){ return ({progress:"inprogress", pending:"waiting"})[s] || s; }
+    // --- import / export ---
+    function normStatus(s){ return ({progress:"inprogress",pending:"waiting"})[s]||s; }
     function normTask(t){
-      let s = normStatus(t.status || "todo");
-      if (!STATUSES.includes(s)) s="todo";
-      const extra = t.extra || { urgent:!!t.urgent, recur:t.recur||null, dayOf:!!t.dayOf };
-      return {
-        id: t.id || uid(),
-        title: t.title || "",
-        notes: (t.notes!=null ? t.notes : (t.note||"")),
-        category: (t.category!=null ? t.category : (t.cat||"General")),
-        status: s,
-        owner: t.owner || "",
-        due: t.due || "",
-        reminder: t.reminder || "",
-        source: t.source || "manual",
-        fromPostId: t.fromPostId || "",
-        extra: { urgent:!!extra.urgent, recur:extra.recur||null, dayOf:!!extra.dayOf },
-        updatedAt: t.updatedAt || nowISO(),
-        deleted: !!t.deleted
-      };
+      let s=normStatus(t.status||"todo"); if(!LANE[s]) s="todo";
+      const ex=t.extra||{ urgent:!!t.urgent, recur:t.recur||null, dayOf:!!t.dayOf };
+      return { id:t.id||uid(), title:t.title||"", notes:(t.notes!=null?t.notes:(t.note||"")),
+        category:(t.category!=null?t.category:(t.cat||"General")), status:s, owner:t.owner||"",
+        due:t.due||"", reminder:t.reminder||"", source:t.source||"manual", fromPostId:t.fromPostId||"",
+        completedAt:t.completedAt||"", extra:{ urgent:!!ex.urgent, recur:ex.recur||null, dayOf:!!ex.dayOf },
+        updatedAt:t.updatedAt||nowISO(), deleted:!!t.deleted };
     }
     async function runImport(){
-      let raw = $("impText").value.trim();
-      const file = $("impFile").files[0];
-      if (!raw && file) raw = await file.text();
-      if (!raw){ toast("Paste JSON or choose a file first."); return; }
-      let data; try { data = JSON.parse(raw); } catch(e){ toast("That's not valid JSON."); return; }
-      const incoming = Array.isArray(data) ? data : (data.tasks || []);
-      const deletedIds = (data && data.deletedIds) || [];
-      let added=0, updated=0, del=0, skipped=0;
-      for (const it of incoming){
-        const n = normTask(it);
-        const ex = RAW[n.id];
-        if (n.deleted){ await deleteTask(n.id); del++; continue; }
-        if (!ex){ await saveTask(n); added++; }
-        else if ((n.updatedAt||"") > (ex.updatedAt||"")){ await saveTask(n); updated++; }
-        else skipped++;
-      }
-      for (const id of deletedIds){ await deleteTask(id); del++; }
+      let raw=$("impText").value.trim(); const file=$("impFile").files[0];
+      if(!raw && file) raw=await file.text();
+      if(!raw){ toast("Paste JSON or choose a file first."); return; }
+      let data; try{ data=JSON.parse(raw); }catch(e){ toast("That's not valid JSON."); return; }
+      const incoming=Array.isArray(data)?data:(data.tasks||[]);
+      const deletedIds=(data&&data.deletedIds)||[];
+      let added=0,updated=0,del=0,skipped=0;
+      for(const it of incoming){ const n=normTask(it); const ex=RAW[n.id];
+        if(n.deleted){ await deleteTask(n.id); del++; continue; }
+        if(!ex){ await saveTask(n); added++; }
+        else if((n.updatedAt||"")>(ex.updatedAt||"")){ await saveTask(n); updated++; }
+        else skipped++; }
+      for(const id of deletedIds){ await deleteTask(id); del++; }
       $("importBg").classList.remove("show"); $("impText").value=""; $("impFile").value="";
       toast(`Imported — ${added} new, ${updated} updated, ${del} removed, ${skipped} unchanged.`);
     }
     function runExport(){
-      const tasks = TASKS.map(t => ({
-        id:t.id, title:t.title||"", notes:t.notes||"", category:t.category||"General",
-        status:t.status||"todo", owner:t.owner||"", due:t.due||"", reminder:t.reminder||"",
-        source:t.source||"manual", fromPostId:t.fromPostId||"", updatedAt:t.updatedAt||nowISO(),
-        extra:{ urgent:!!(t.extra&&t.extra.urgent), recur:(t.extra&&t.extra.recur)||null, dayOf:!!(t.extra&&t.extra.dayOf) }
-      }));
-      const deletedIds = Object.values(RAW).filter(t=>t.deleted).map(t=>t.id);
-      const payload = { board:"olivos-admin", exportedBy:ME.name, exportedAt:nowISO(), tasks, deletedIds };
-      const str = JSON.stringify(payload, null, 2);
-      const blob = new Blob([str], { type:"application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `olivos-admin-board-${todayStr()}.json`;
-      document.body.appendChild(a); a.click(); a.remove();
-      if (navigator.clipboard) navigator.clipboard.writeText(str).catch(()=>{});
+      const tasks=TASKS.map(t=>({ id:t.id, title:t.title||"", notes:t.notes||"", category:t.category||"General",
+        status:t.status||"todo", owner:t.owner||"", due:t.due||"", reminder:t.reminder||"", source:t.source||"manual",
+        fromPostId:t.fromPostId||"", completedAt:t.completedAt||"", updatedAt:t.updatedAt||nowISO(),
+        extra:{ urgent:!!(t.extra&&t.extra.urgent), recur:(t.extra&&t.extra.recur)||null, dayOf:!!(t.extra&&t.extra.dayOf) } }));
+      const deletedIds=Object.values(RAW).filter(t=>t.deleted).map(t=>t.id);
+      const str=JSON.stringify({ board:"olivos-admin", exportedBy:ME.name, exportedAt:nowISO(), tasks, deletedIds }, null, 2);
+      const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([str],{type:"application/json"}));
+      a.download=`olivos-admin-board-${today()}.json`; document.body.appendChild(a); a.click(); a.remove();
+      if(navigator.clipboard) navigator.clipboard.writeText(str).catch(()=>{});
       toast(`Exported ${tasks.length} tasks — downloaded + copied to clipboard.`);
     }
 
-    // ---------- wire UI ----------
+    // --- wire UI ---
     function wireUI(){
-      $("newBtn").addEventListener("click", openNew);
+      $("tabBoard").addEventListener("click", ()=>{ view="board"; expandedLane=null; render(); });
+      $("tabCal").addEventListener("click", ()=>{ view="calendar"; render(); });
+      $("newBtn").addEventListener("click", ()=> openNew("todo"));
       $("mCancel").addEventListener("click", closeModal);
       $("mSave").addEventListener("click", saveModal);
-      $("mDelete").addEventListener("click", async ()=>{ if(confirm("Delete this card?")){ await deleteTask($("mDelete")._id); closeModal(); toast("Card deleted"); } });
-      $("modalBg").addEventListener("click", (e)=>{ if(e.target===$("modalBg")) closeModal(); });
+      $("mDelete").addEventListener("click", async ()=>{ if(confirm("Delete this task?")){ await deleteTask($("mDelete")._id); closeModal(); toast("Task deleted"); } });
+      $("modalBg").addEventListener("click", e=>{ if(e.target===$("modalBg")) closeModal(); });
       $("importBtn").addEventListener("click", ()=> $("importBg").classList.add("show"));
       $("impCancel").addEventListener("click", ()=> $("importBg").classList.remove("show"));
       $("impRun").addEventListener("click", runImport);
-      $("importBg").addEventListener("click", (e)=>{ if(e.target===$("importBg")) $("importBg").classList.remove("show"); });
+      $("importBg").addEventListener("click", e=>{ if(e.target===$("importBg")) $("importBg").classList.remove("show"); });
       $("exportBtn").addEventListener("click", runExport);
       $("ownerFilter").addEventListener("change", render);
     }
