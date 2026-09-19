@@ -177,11 +177,11 @@
           // if a manager takes it, mirror a copy onto the Admin Board
           if (ME.admin) {
             await setDoc(doc(db,"adminTasks",p.id), {
-              fromPostId: p.id, subject: p.subject, body: p.body || "",
-              category: p.category || "General", assignTo: p.assignTo || "General",
-              dueDate: p.dueDate || null, urgent: !!p.urgent, status: "inprogress",
-              takenById: ME.uid, takenByName: ME.name, postedByName: p.createdByName || "—",
-              createdAt: serverTimestamp()
+              title: p.subject, notes: p.body || "", category: p.category || "General",
+              status: "inprogress", owner: ME.name, due: p.dueDate || "", reminder: "",
+              source: "feed", fromPostId: p.id, deleted: false,
+              extra: { urgent: !!p.urgent, recur: null, dayOf: false },
+              updatedAt: new Date().toISOString(), createdAt: serverTimestamp()
             }, { merge:true });
           }
         }

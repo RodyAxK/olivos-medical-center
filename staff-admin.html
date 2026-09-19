@@ -19,25 +19,394 @@
     </div>
     <div class="app-user">
       <a class="btn btn-ghost" href="staff-portal.html">← Dashboard</a>
+      <span class="badge" id="userBadge">•</span>
+      <span class="who" id="userWho">…</span>
       <button class="btn btn-ghost" id="logoutBtn">Log out</button>
     </div>
   </header>
+
   <main class="app-main">
-    <div class="panel">
-      <div class="big">🗂️</div>
-      <h2>Admin Board</h2>
-      <p>This is your and Janet's private shared board. The live kanban (To&nbsp;Do / In&nbsp;Progress / Waiting / Done) with owner badges and pull-from-feed is being built next.</p>
+    <div id="errBanner" class="err-banner" style="display:none"></div>
+
+    <div class="toolbar">
+      <button class="btn btn-gold" id="newBtn">+ New card</button>
+      <button class="btn btn-ghost" id="importBtn">⬆ Import / Pull in</button>
+      <button class="btn btn-ghost" id="exportBtn">⬇ Export / Push out</button>
+      <span class="spacer"></span>
+      <label class="chk" style="color:var(--muted)">Owner:</label>
+      <select id="ownerFilter" class="in">
+        <option value="">Everyone</option>
+        <option value="Rody">Rody</option>
+        <option value="Janet">Janet</option>
+        <option value="__none">Unassigned</option>
+      </select>
+    </div>
+
+    <section class="upcoming">
+      <h3>⏰ Upcoming &amp; reminders <span style="font-weight:500;color:var(--muted);font-size:.85rem">— due soon or overdue</span></h3>
+      <div id="upRow" class="up-row"></div>
+    </section>
+
+    <section class="cal panel">
+      <div class="cal-head">
+        <h3>📅 Due dates</h3>
+        <div class="cal-nav">
+          <button id="calPrev" title="Previous month">‹</button>
+          <span id="calTitle" style="font-weight:700;color:var(--olive-dark);min-width:150px;text-align:center;display:inline-block"></span>
+          <button id="calNext" title="Next month">›</button>
+        </div>
+      </div>
+      <div id="calGrid" class="cal-grid"></div>
+      <div id="calDay" class="cal-day"></div>
+    </section>
+
+    <div class="board" id="board">
+      <div class="col" data-col="todo"><div class="col-head"><span class="name">To Do</span><span class="count" id="cnt-todo">0</span></div></div>
+      <div class="col" data-col="inprogress"><div class="col-head"><span class="name">In Progress</span><span class="count" id="cnt-inprogress">0</span></div></div>
+      <div class="col" data-col="waiting"><div class="col-head"><span class="name">Waiting</span><span class="count" id="cnt-waiting">0</span></div></div>
+      <div class="col" data-col="done"><div class="col-head"><span class="name">Done</span><span class="count" id="cnt-done">0</span></div></div>
     </div>
   </main>
+
+  <!-- New / Edit modal -->
+  <div class="modal-bg" id="modalBg">
+    <div class="modal">
+      <h3 id="mTitle">New card</h3>
+      <input type="hidden" id="mId" />
+      <div class="field"><label>Title</label><input id="mTitleIn" class="in" type="text" placeholder="Short task title" /></div>
+      <div class="field"><label>Notes / details</label><textarea id="mNotes" class="in" placeholder="Context, phone numbers, references…"></textarea></div>
+      <div class="row2">
+        <div class="field"><label>Category</label><input id="mCat" class="in" type="text" placeholder="e.g., Credentialing, Billing" /></div>
+        <div class="field"><label>Owner</label><select id="mOwner" class="in"><option value="">Unassigned</option><option value="Rody">Rody</option><option value="Janet">Janet</option></select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Status / column</label><select id="mStatus" class="in"><option value="todo">To Do</option><option value="inprogress">In Progress</option><option value="waiting">Waiting</option><option value="done">Done</option></select></div>
+        <div class="field"><label>Recurs</label><select id="mRecur" class="in"><option value="">No</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Due date</label><input id="mDue" class="in" type="date" /></div>
+        <div class="field"><label>Reminder date</label><input id="mReminder" class="in" type="date" /></div>
+      </div>
+      <div class="field"><label class="chk"><input type="checkbox" id="mUrgent" /> Mark urgent</label></div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost del-left" id="mDelete" style="display:none;color:#b4472b">Delete</button>
+        <button class="btn btn-ghost" id="mCancel">Cancel</button>
+        <button class="btn btn-gold" id="mSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import modal -->
+  <div class="modal-bg" id="importBg">
+    <div class="modal">
+      <h3>Import / Pull in tasks</h3>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px">Paste JSON from your local board, or choose a .json file. Tasks merge by ID — the newer edit wins, and deletions are honored.</p>
+      <div class="field"><label>Upload a .json file</label><input id="impFile" class="in" type="file" accept=".json,application/json" /></div>
+      <div class="field"><label>…or paste JSON</label><textarea id="impText" class="in" style="min-height:140px" placeholder='{ "board":"olivos-admin", "tasks":[ … ] }'></textarea></div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="impCancel">Cancel</button>
+        <button class="btn btn-gold" id="impRun">Merge in</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
   <script type="module">
-    import { auth } from "./firebase-init.js";
+    import { auth, db } from "./firebase-init.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-    import { isAdmin } from "./staff-config.js";
+    import { collection, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+    import { ADMINS, isAdmin, colorFor } from "./staff-config.js";
+
+    const $ = (id) => document.getElementById(id);
+    let ME = null;
+    let RAW = {};     // id -> data (includes deleted tombstones)
+    let TASKS = [];   // active tasks only
+    const STATUSES = ["todo","inprogress","waiting","done"];
+    const OWNER_COLORS = {}; Object.values(ADMINS).forEach(a => OWNER_COLORS[a.name] = a.color);
+    function ownerColor(n){ return OWNER_COLORS[n] || "#9a8f6a"; }
+
+    function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"), 2600); }
+    function showErr(msg){ const b=$("errBanner"); b.textContent=msg; b.style.display="block"; }
+    function escapeHtml(s){ return (s||"").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+    function nowISO(){ return new Date().toISOString(); }
+    function uid(){ return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+    function ymdLocal(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+    function todayStr(){ return ymdLocal(new Date()); }
+
+    // ---------- auth gate ----------
     onAuthStateChanged(auth, (user) => {
       if (!user) { location.replace("staff-login.html"); return; }
       if (!isAdmin(user.uid)) { location.replace("staff-portal.html"); return; }
+      ME = { uid: user.uid, name: ADMINS[user.uid].name, color: colorFor(user.uid) };
+      $("userWho").textContent = ME.name;
+      $("userBadge").textContent = (ME.name[0]||"A").toUpperCase();
+      $("userBadge").style.background = ME.color;
+      initCal(); wireUI(); subscribe();
     });
-    document.getElementById("logoutBtn").addEventListener("click", async () => { await signOut(auth); location.replace("staff-login.html"); });
+    $("logoutBtn").addEventListener("click", async () => { await signOut(auth); location.replace("staff-login.html"); });
+
+    // ---------- live data ----------
+    function subscribe(){
+      onSnapshot(collection(db, "adminTasks"), (snap) => {
+        RAW = {}; snap.forEach(d => RAW[d.id] = { id:d.id, ...d.data() });
+        TASKS = Object.values(RAW).filter(t => !t.deleted);
+        render();
+      }, (e) => { showErr("Can't reach the Admin Board data. Make sure you're signed in as an admin and the security rules are published."); console.error(e); });
+    }
+
+    // ---------- write helpers ----------
+    async function saveTask(t){ try { await setDoc(doc(db,"adminTasks",t.id), t, { merge:false }); } catch(e){ console.error(e); toast("Couldn't save — check your connection."); } }
+    async function patchTask(id, fields){ try { await setDoc(doc(db,"adminTasks",id), { ...fields, updatedAt: nowISO() }, { merge:true }); } catch(e){ console.error(e); } }
+    async function deleteTask(id){ try { await setDoc(doc(db,"adminTasks",id), { deleted:true, updatedAt: nowISO() }, { merge:true }); } catch(e){ console.error(e); } }
+
+    // ---------- render ----------
+    function render(){ renderBoard(); renderUpcoming(); renderCalendar(); }
+
+    function ownerFilterVal(){ return $("ownerFilter").value; }
+    function passesOwner(t){ const f=ownerFilterVal(); if(!f) return true; if(f==="__none") return !t.owner; return t.owner===f; }
+
+    function renderBoard(){
+      STATUSES.forEach(s => {
+        const col = document.querySelector(`.col[data-col="${s}"]`);
+        col.querySelectorAll(".kcard").forEach(n => n.remove());
+        const list = TASKS.filter(t => (t.status||"todo")===s && passesOwner(t))
+          .sort((a,b) => (a.due||"9999").localeCompare(b.due||"9999"));
+        $("cnt-"+s).textContent = list.length;
+        list.forEach(t => col.appendChild(kcard(t)));
+      });
+    }
+
+    function chip(text, cls){ const s=document.createElement("span"); s.className="chip "+(cls||""); s.textContent=text; return s; }
+    function overdue(t){ return t.due && t.status!=="done" && t.due < todayStr(); }
+
+    function kcard(t){
+      const ex = t.extra || {};
+      const c = document.createElement("div");
+      c.className = "kcard" + (ex.urgent ? " urgent" : "");
+      c.dataset.tid = t.id; c.draggable = true;
+      c.addEventListener("dragstart", (e)=>{ e.dataTransfer.setData("text/plain", t.id); c.classList.add("dragging"); });
+      c.addEventListener("dragend", ()=> c.classList.remove("dragging"));
+
+      const top = document.createElement("div"); top.className="kcard-top";
+      const own = document.createElement("span"); own.className="own"; own.style.background=ownerColor(t.owner);
+      own.textContent = t.owner ? t.owner[0].toUpperCase() : "?"; own.title = t.owner || "Unassigned";
+      top.appendChild(own);
+      if (t.category) top.appendChild(chip(t.category, "cat"));
+      if (ex.urgent) top.appendChild(chip("Urgent", "urg"));
+      if (t.source==="feed") top.appendChild(chip("From feed", "feed"));
+      c.appendChild(top);
+
+      const h = document.createElement("div"); h.className="k-title"; h.textContent=t.title||"(untitled)";
+      h.addEventListener("click", ()=> openEdit(t)); c.appendChild(h);
+
+      if (t.notes){ const n=document.createElement("div"); n.className="k-notes"; n.textContent=t.notes;
+        n.addEventListener("click", ()=> n.classList.toggle("open")); c.appendChild(n); }
+
+      const meta = document.createElement("div"); meta.className="k-meta";
+      if (t.due) meta.appendChild(chip((overdue(t)?"Overdue ":"Due ")+t.due, overdue(t)?"over":"due"));
+      if (ex.recur) meta.appendChild(chip("↻ "+ex.recur, "recur"));
+
+      const move = document.createElement("select"); move.className="k-move";
+      [["todo","To Do"],["inprogress","In Progress"],["waiting","Waiting"],["done","Done"]].forEach(([v,l])=>{
+        const o=document.createElement("option"); o.value=v; o.textContent=l; if(v===(t.status||"todo"))o.selected=true; move.appendChild(o); });
+      move.addEventListener("change", ()=> patchTask(t.id, { status: move.value }));
+      const acts = document.createElement("div"); acts.className="k-actions"; acts.appendChild(move);
+      meta.appendChild(acts);
+      c.appendChild(meta);
+      return c;
+    }
+
+    // drag/drop onto columns
+    document.querySelectorAll(".col").forEach(col => {
+      col.addEventListener("dragover", (e)=>{ e.preventDefault(); col.classList.add("drag-over"); });
+      col.addEventListener("dragleave", ()=> col.classList.remove("drag-over"));
+      col.addEventListener("drop", (e)=>{ e.preventDefault(); col.classList.remove("drag-over");
+        const id = e.dataTransfer.getData("text/plain"); const s = col.dataset.col;
+        if (id && s) patchTask(id, { status: s }); });
+    });
+
+    // ---------- upcoming ----------
+    function renderUpcoming(){
+      const row = $("upRow"); row.innerHTML="";
+      const today = todayStr();
+      const in14 = ymdLocal(new Date(Date.now()+14*86400000));
+      const list = TASKS.filter(t => t.status!=="done" && passesOwner(t) && (
+        (t.due && t.due <= in14) || (t.reminder && t.reminder <= in14)
+      )).sort((a,b)=> (a.due||a.reminder||"9999").localeCompare(b.due||b.reminder||"9999"));
+      if (!list.length){ row.innerHTML = `<div class="up-empty">Nothing due in the next two weeks. 🎉</div>`; return; }
+      list.forEach(t => {
+        const d = t.due || t.reminder;
+        const el = document.createElement("div");
+        el.className = "up-item" + (d < today ? " over" : ((t.extra&&t.extra.urgent) ? " urg" : ""));
+        const ttl = document.createElement("div"); ttl.className="ttl"; ttl.textContent = t.title||"(untitled)"; el.appendChild(ttl);
+        const sub = document.createElement("div"); sub.className="sub";
+        sub.textContent = (d < today ? "Overdue · " : "Due ") + d + (t.owner ? " · "+t.owner : "");
+        el.appendChild(sub);
+        el.addEventListener("click", ()=> jumpTo(t.id));
+        row.appendChild(el);
+      });
+    }
+
+    function jumpTo(id){
+      const el = document.querySelector(`.kcard[data-tid="${id}"]`);
+      if (el){ el.scrollIntoView({behavior:"smooth", block:"center"}); el.classList.remove("flash"); void el.offsetWidth; el.style.boxShadow="0 0 0 3px var(--gold)"; setTimeout(()=> el.style.boxShadow="", 1400); }
+    }
+
+    // ---------- calendar ----------
+    let calYear, calMonth;
+    function initCal(){
+      const t=new Date(); calYear=t.getFullYear(); calMonth=t.getMonth();
+      $("calPrev").addEventListener("click", ()=>{ calMonth--; if(calMonth<0){calMonth=11;calYear--;} $("calDay").style.display="none"; renderCalendar(); });
+      $("calNext").addEventListener("click", ()=>{ calMonth++; if(calMonth>11){calMonth=0;calYear++;} $("calDay").style.display="none"; renderCalendar(); });
+    }
+    function renderCalendar(){
+      const grid=$("calGrid"); if(!grid||calYear==null) return; grid.innerHTML="";
+      $("calTitle").textContent = new Date(calYear,calMonth,1).toLocaleDateString(undefined,{month:"long",year:"numeric"});
+      ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{ const el=document.createElement("div"); el.className="cal-dow"; el.textContent=d; grid.appendChild(el); });
+      const byDay={};
+      TASKS.forEach(t=>{ if(t.due && t.status!=="done" && passesOwner(t)) (byDay[t.due]=byDay[t.due]||[]).push(t); });
+      const firstDow=new Date(calYear,calMonth,1).getDay();
+      const days=new Date(calYear,calMonth+1,0).getDate();
+      const today=todayStr();
+      for(let i=0;i<firstDow;i++){ const b=document.createElement("div"); b.className="cal-cell empty"; grid.appendChild(b); }
+      for(let d=1; d<=days; d++){
+        const ds=`${calYear}-${String(calMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        const cell=document.createElement("div"); cell.className="cal-cell";
+        if(ds===today) cell.classList.add("today");
+        const num=document.createElement("span"); num.className="cal-num"; num.textContent=d; cell.appendChild(num);
+        const items=byDay[ds];
+        if(items&&items.length){
+          cell.classList.add("has");
+          const over=ds<today, urg=items.some(t=>t.extra&&t.extra.urgent);
+          const dot=document.createElement("span"); dot.className="cal-dot"+(over?" over":(urg?" urg":"")); dot.textContent=items.length; cell.appendChild(dot);
+          cell.addEventListener("click", ()=> showCalDay(ds, items));
+        }
+        grid.appendChild(cell);
+      }
+    }
+    function showCalDay(ds, items){
+      const box=$("calDay"); box.style.display="block"; box.innerHTML="";
+      const h=document.createElement("div"); h.className="cal-day-h"; h.textContent="Due "+ds+" · "+items.length+" task"+(items.length>1?"s":""); box.appendChild(h);
+      items.forEach(t=>{
+        const r=document.createElement("div"); r.className="cal-day-item";
+        r.appendChild(chip(t.category||"General","cat"));
+        const s=document.createElement("span"); s.textContent=t.title; r.appendChild(s);
+        if(t.owner){ const w=document.createElement("span"); w.style.cssText="margin-left:auto;color:var(--muted);font-size:.8rem"; w.textContent="• "+t.owner; r.appendChild(w); }
+        r.addEventListener("click", ()=> jumpTo(t.id));
+        box.appendChild(r);
+      });
+    }
+
+    // ---------- new / edit modal ----------
+    function openNew(){
+      $("mTitle").textContent="New card"; $("mId").value="";
+      $("mTitleIn").value=""; $("mNotes").value=""; $("mCat").value=""; $("mOwner").value=ME.name;
+      $("mStatus").value="todo"; $("mRecur").value=""; $("mDue").value=""; $("mReminder").value=""; $("mUrgent").checked=false;
+      $("mDelete").style.display="none";
+      $("modalBg").classList.add("show");
+    }
+    function openEdit(t){
+      $("mTitle").textContent="Edit card"; $("mId").value=t.id;
+      $("mTitleIn").value=t.title||""; $("mNotes").value=t.notes||""; $("mCat").value=t.category||"";
+      $("mOwner").value=t.owner||""; $("mStatus").value=t.status||"todo";
+      $("mRecur").value=(t.extra&&t.extra.recur)||""; $("mDue").value=t.due||""; $("mReminder").value=t.reminder||"";
+      $("mUrgent").checked=!!(t.extra&&t.extra.urgent);
+      $("mDelete").style.display=""; $("mDelete")._id=t.id;
+      $("modalBg").classList.add("show");
+    }
+    function closeModal(){ $("modalBg").classList.remove("show"); }
+    async function saveModal(){
+      const title=$("mTitleIn").value.trim(); if(!title){ $("mTitleIn").focus(); return; }
+      const id=$("mId").value || uid();
+      const existing = RAW[id] || {};
+      const t = {
+        id, title, notes:$("mNotes").value.trim(), category:$("mCat").value.trim()||"General",
+        status:$("mStatus").value, owner:$("mOwner").value,
+        due:$("mDue").value||"", reminder:$("mReminder").value||"",
+        source: existing.source || "manual", fromPostId: existing.fromPostId || "",
+        extra: { urgent:$("mUrgent").checked, recur:$("mRecur").value||null, dayOf: !!$("mReminder").value },
+        updatedAt: nowISO(), deleted:false
+      };
+      await saveTask(t); closeModal(); toast(existing.id ? "Card updated" : "Card added");
+    }
+
+    // ---------- import / export ----------
+    function normStatus(s){ return ({progress:"inprogress", pending:"waiting"})[s] || s; }
+    function normTask(t){
+      let s = normStatus(t.status || "todo");
+      if (!STATUSES.includes(s)) s="todo";
+      const extra = t.extra || { urgent:!!t.urgent, recur:t.recur||null, dayOf:!!t.dayOf };
+      return {
+        id: t.id || uid(),
+        title: t.title || "",
+        notes: (t.notes!=null ? t.notes : (t.note||"")),
+        category: (t.category!=null ? t.category : (t.cat||"General")),
+        status: s,
+        owner: t.owner || "",
+        due: t.due || "",
+        reminder: t.reminder || "",
+        source: t.source || "manual",
+        fromPostId: t.fromPostId || "",
+        extra: { urgent:!!extra.urgent, recur:extra.recur||null, dayOf:!!extra.dayOf },
+        updatedAt: t.updatedAt || nowISO(),
+        deleted: !!t.deleted
+      };
+    }
+    async function runImport(){
+      let raw = $("impText").value.trim();
+      const file = $("impFile").files[0];
+      if (!raw && file) raw = await file.text();
+      if (!raw){ toast("Paste JSON or choose a file first."); return; }
+      let data; try { data = JSON.parse(raw); } catch(e){ toast("That's not valid JSON."); return; }
+      const incoming = Array.isArray(data) ? data : (data.tasks || []);
+      const deletedIds = (data && data.deletedIds) || [];
+      let added=0, updated=0, del=0, skipped=0;
+      for (const it of incoming){
+        const n = normTask(it);
+        const ex = RAW[n.id];
+        if (n.deleted){ await deleteTask(n.id); del++; continue; }
+        if (!ex){ await saveTask(n); added++; }
+        else if ((n.updatedAt||"") > (ex.updatedAt||"")){ await saveTask(n); updated++; }
+        else skipped++;
+      }
+      for (const id of deletedIds){ await deleteTask(id); del++; }
+      $("importBg").classList.remove("show"); $("impText").value=""; $("impFile").value="";
+      toast(`Imported — ${added} new, ${updated} updated, ${del} removed, ${skipped} unchanged.`);
+    }
+    function runExport(){
+      const tasks = TASKS.map(t => ({
+        id:t.id, title:t.title||"", notes:t.notes||"", category:t.category||"General",
+        status:t.status||"todo", owner:t.owner||"", due:t.due||"", reminder:t.reminder||"",
+        source:t.source||"manual", fromPostId:t.fromPostId||"", updatedAt:t.updatedAt||nowISO(),
+        extra:{ urgent:!!(t.extra&&t.extra.urgent), recur:(t.extra&&t.extra.recur)||null, dayOf:!!(t.extra&&t.extra.dayOf) }
+      }));
+      const deletedIds = Object.values(RAW).filter(t=>t.deleted).map(t=>t.id);
+      const payload = { board:"olivos-admin", exportedBy:ME.name, exportedAt:nowISO(), tasks, deletedIds };
+      const str = JSON.stringify(payload, null, 2);
+      const blob = new Blob([str], { type:"application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `olivos-admin-board-${todayStr()}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      if (navigator.clipboard) navigator.clipboard.writeText(str).catch(()=>{});
+      toast(`Exported ${tasks.length} tasks — downloaded + copied to clipboard.`);
+    }
+
+    // ---------- wire UI ----------
+    function wireUI(){
+      $("newBtn").addEventListener("click", openNew);
+      $("mCancel").addEventListener("click", closeModal);
+      $("mSave").addEventListener("click", saveModal);
+      $("mDelete").addEventListener("click", async ()=>{ if(confirm("Delete this card?")){ await deleteTask($("mDelete")._id); closeModal(); toast("Card deleted"); } });
+      $("modalBg").addEventListener("click", (e)=>{ if(e.target===$("modalBg")) closeModal(); });
+      $("importBtn").addEventListener("click", ()=> $("importBg").classList.add("show"));
+      $("impCancel").addEventListener("click", ()=> $("importBg").classList.remove("show"));
+      $("impRun").addEventListener("click", runImport);
+      $("importBg").addEventListener("click", (e)=>{ if(e.target===$("importBg")) $("importBg").classList.remove("show"); });
+      $("exportBtn").addEventListener("click", runExport);
+      $("ownerFilter").addEventListener("change", render);
+    }
   </script>
 </body>
 </html>
